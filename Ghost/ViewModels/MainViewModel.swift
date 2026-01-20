@@ -22,6 +22,7 @@ final class MainViewModel: ObservableObject {
     init() {
         settings = storage.loadSettings()
         radarService.setSensitivity(settings.radarSensitivity)
+        audioService.volume = settings.volume
         startRandomSounds()
     }
     
@@ -45,6 +46,7 @@ final class MainViewModel: ObservableObject {
     func stopRandomSounds() {
         soundTimer?.invalidate()
         soundTimer = nil
+        audioService.stopAllSounds() // Добавьте этот метод в AudioService если его нет
     }
     
     func toggleSound() {
@@ -58,10 +60,28 @@ final class MainViewModel: ObservableObject {
         }
     }
     
+    // Новый метод для установки конкретного значения
+    func setSoundEnabled(_ enabled: Bool) {
+        settings.soundEnabled = enabled
+        storage.saveSettings(settings)
+        
+        if enabled {
+            startRandomSounds()
+        } else {
+            stopRandomSounds()
+        }
+    }
+    
     func updateSensitivity(_ value: Double) {
         settings.radarSensitivity = value
         storage.saveSettings(settings)
         radarService.setSensitivity(value)
+    }
+    
+    func updateVolume(_ value: Double) {
+        settings.volume = value
+        storage.saveSettings(settings)
+        audioService.volume = value
     }
     
     func showPaywallIfNeeded() {

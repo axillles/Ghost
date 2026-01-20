@@ -13,6 +13,11 @@ final class AudioService: ObservableObject {
     
     private var audioPlayer: AVAudioPlayer?
     private var soundFiles: [String] = []
+    var volume: Double = 0.5 {
+        didSet {
+            audioPlayer?.volume = Float(volume)
+        }
+    }
     
     private init() {
         loadSoundFiles()
@@ -57,11 +62,15 @@ final class AudioService: ObservableObject {
         
         do {
             audioPlayer = try AVAudioPlayer(contentsOf: url)
-            audioPlayer?.volume = 0.5
+            audioPlayer?.volume = Float(volume)
             audioPlayer?.play()
         } catch {
             print("Error playing sound: \(error)")
         }
+    }
+    
+    func stopAllSounds() {
+        audioPlayer?.stop()
     }
     
     func addSoundFiles(_ files: [String]) {
@@ -78,7 +87,7 @@ final class AudioService: ObservableObject {
         do {
             audioPlayer = try AVAudioPlayer(contentsOf: url)
             audioPlayer?.numberOfLoops = -1 // Loop indefinitely
-            audioPlayer?.volume = 0.5
+            audioPlayer?.volume = Float(volume)
             audioPlayer?.play()
         } catch {
             print("Error playing spirit sound: \(error)")
