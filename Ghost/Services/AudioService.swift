@@ -67,4 +67,26 @@ final class AudioService: ObservableObject {
     func addSoundFiles(_ files: [String]) {
         soundFiles.append(contentsOf: files)
     }
+    
+    func playSpiritSound() {
+        let spiritFiles = ["Spirit_1", "Spirit_2", "Spirit_3", "Spirit_4", "Spirit_5", "Spirit_6", "Spirit_8", "Spirit_9"]
+        guard let randomFile = spiritFiles.randomElement(),
+              let url = Bundle.main.url(forResource: randomFile, withExtension: "mp3", subdirectory: "Sounds/Spirit") else {
+            return
+        }
+        
+        do {
+            audioPlayer = try AVAudioPlayer(contentsOf: url)
+            audioPlayer?.numberOfLoops = -1 // Loop indefinitely
+            audioPlayer?.volume = 0.5
+            audioPlayer?.play()
+        } catch {
+            print("Error playing spirit sound: \(error)")
+        }
+    }
+    
+    func stopSpiritSound() {
+        audioPlayer?.stop()
+        audioPlayer = nil
+    }
 }

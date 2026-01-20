@@ -27,7 +27,7 @@ struct RadarDotView: View {
     
     var body: some View {
         Circle()
-            .fill(Color.green.opacity(dot.intensity))
+            .fill(Color(hex: "7AFD91").opacity(dot.intensity))
             .frame(width: 12, height: 12)
             .position(
                 x: dot.position.x * size.width,
@@ -74,7 +74,7 @@ struct RadarLine: View {
                 y: center.y + CGFloat(sin(angle)) * radius
             ))
         }
-        .stroke(Color.green.opacity(0.2), lineWidth: 1)
+        .stroke(Color(hex: "7AFD91").opacity(0.2), lineWidth: 1)
     }
 }
 
@@ -91,7 +91,7 @@ struct RadarGrid: View {
                 // Кольца
                 ForEach(1..<4, id: \.self) { index in
                     Circle()
-                        .stroke(Color.green.opacity(0.3), lineWidth: 1)
+                        .stroke(Color(hex: "7AFD91").opacity(0.3), lineWidth: 1)
                         .frame(
                             width: radius * 2 * CGFloat(index) / 3,
                             height: radius * 2 * CGFloat(index) / 3

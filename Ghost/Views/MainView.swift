@@ -7,10 +7,35 @@
 
 import SwiftUI
 
+enum Tab: Int, CaseIterable {
+    case radar = 0
+    case emf = 1
+    case spiritBox = 2
+    case settings = 3
+    
+    var title: String {
+        switch self {
+        case .radar: return "Radar"
+        case .emf: return "EMF"
+        case .spiritBox: return "Spirit Box"
+        case .settings: return "Settings"
+        }
+    }
+    
+    var imageName: String {
+        switch self {
+        case .radar: return "Tab_radar"
+        case .emf: return "Tab_emf"
+        case .spiritBox: return "Tab_spirit"
+        case .settings: return "Tab_settings"
+        }
+    }
+}
+
 struct MainView: View {
     @StateObject private var viewModel = MainViewModel()
     @StateObject private var cameraService = CameraService.shared
-    @State private var selectedTab = 0
+    @State private var selectedTab: Tab = .radar
     
     var body: some View {
         ZStack {
@@ -27,87 +52,23 @@ struct MainView: View {
                 .ignoresSafeArea()
             
             VStack(spacing: 0) {
-                // Верхняя панель
-                HStack {
-                    Button(action: {
-                        viewModel.toggleSound()
-                    }) {
-                        Image(systemName: viewModel.settings.soundEnabled ? "speaker.wave.3.fill" : "speaker.slash.fill")
-                            .font(.title2)
-                            .foregroundColor(.white)
-                            .padding()
-                    }
-                    
-                    Spacer()
-                    
-                    if !viewModel.settings.hasUnlockedPremium {
-                        Button(action: {
-                            viewModel.showPaywall = true
-                        }) {
-                            Image(systemName: "crown.fill")
-                                .font(.title2)
-                                .foregroundColor(.yellow)
-                                .padding()
-                        }
-                    }
-                }
-                .padding(.horizontal)
-                .padding(.top, 10)
-                
                 // Основной контент
-                TabView(selection: $selectedTab) {
-                    // Радар
-                    RadarView()
-                        .tag(0)
-                    
-                    // Магнитометр
-                    MagnetometerView()
-                        .tag(1)
+                Group {
+                    switch selectedTab {
+                    case .radar:
+                        RadarView()
+                    case .emf:
+                        EMFView()
+                    case .spiritBox:
+                        SpiritBoxView()
+                    case .settings:
+                        SettingsView()
+                    }
                 }
-                .tabViewStyle(.page(indexDisplayMode: .never))
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
                 
-                // Нижняя панель управления
-                VStack(spacing: 15) {
-                    // Индикатор выбранного режима
-                    HStack(spacing: 20) {
-                        Button(action: { selectedTab = 0 }) {
-                            VStack {
-                                Image(systemName: "waveform")
-                                    .font(.title2)
-                                Text("Радар")
-                                    .font(.caption)
-                            }
-                            .foregroundColor(selectedTab == 0 ? .green : .gray)
-                        }
-                        
-                        Button(action: { selectedTab = 1 }) {
-                            VStack {
-                                Image(systemName: "sensor.tag.radiowaves.forward")
-                                    .font(.title2)
-                                Text("Магнитометр")
-                                    .font(.caption)
-                            }
-                            .foregroundColor(selectedTab == 1 ? .green : .gray)
-                        }
-                    }
-                    .padding(.vertical, 10)
-                    
-                    // Слайдер чувствительности
-                    VStack(alignment: .leading, spacing: 5) {
-                        Text("Чувствительность")
-                            .font(.caption)
-                            .foregroundColor(.white)
-                        Slider(value: Binding(
-                            get: { viewModel.settings.radarSensitivity },
-                            set: { viewModel.updateSensitivity($0) }
-                        ), in: 0...1)
-                        .tint(.green)
-                    }
-                    .padding(.horizontal, 20)
-                    .padding(.bottom, 10)
-                }
-                .background(Color.black.opacity(0.6))
-                .cornerRadius(20, corners: [.topLeft, .topRight])
+                // Таббар
+                CustomTabBar(selectedTab: $selectedTab)
             }
         }
         .sheet(isPresented: $viewModel.showPaywall) {
@@ -116,6 +77,35 @@ struct MainView: View {
         .onAppear {
             cameraService.checkPermission()
         }
+    }
+}
+
+struct CustomTabBar: View {
+    @Binding var selectedTab: Tab
+    
+    var body: some View {
+        HStack(spacing: 0) {
+            ForEach(Tab.allCases, id: \.self) { tab in
+                Button(action: {
+                    selectedTab = tab
+                }) {
+                    VStack(spacing: 6) {
+                        Image(tab.imageName)
+                            .resizable()
+                            .frame(width: 28, height: 28)
+                            .opacity(selectedTab == tab ? 1.0 : 0.5)
+                        
+                        Text(tab.title)
+                            .font(.system(size: 11, weight: .medium))
+                            .foregroundColor(selectedTab == tab ? Color(hex: "7AFD91") : Color.white.opacity(0.5))
+                    }
+                    .frame(maxWidth: .infinity)
+                    .padding(.vertical, 12)
+                }
+            }
+        }
+        .background(Color.black)
+        .padding(.bottom, 0)
     }
 }
 
