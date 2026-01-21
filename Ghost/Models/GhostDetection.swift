@@ -9,10 +9,15 @@ import Foundation
 import CoreGraphics
 
 struct GhostDot: Identifiable {
-    let id = UUID()
-    var position: CGPoint
-    var intensity: Double
-    var age: TimeInterval
+    let id: UUID
+    var position: CGPoint // Координаты от 0 до 1
+    var intensity: Double // Яркость (0..1)
+    
+    init(id: UUID = UUID(), position: CGPoint, intensity: Double) {
+        self.id = id
+        self.position = position
+        self.intensity = intensity
+    }
 }
 
 struct MagnetometerReading {

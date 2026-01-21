@@ -56,7 +56,7 @@ struct MainView: View {
                 Group {
                     switch selectedTab {
                     case .radar:
-                        RadarView()
+                        RadarScreen()
                     case .emf:
                         EMFView()
                     case .spiritBox:
