@@ -14,7 +14,7 @@ struct GhostApp: App {
     var body: some Scene {
         WindowGroup {
             if showOnboarding {
-                OnboardingView(isPresented: $showOnboarding)
+                OnboardingFlow()
             } else {
                 MainView()
             }
