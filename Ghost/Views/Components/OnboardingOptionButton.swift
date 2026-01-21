@@ -51,7 +51,3 @@ struct OptionButton: View {
         }
     }
 }
-
-#Preview {
-    OnboardingFlow()
-}

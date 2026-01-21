@@ -1,83 +1,112 @@
-//
-//  SpiritBoxView.swift
-//  Ghost
-//
-//  Created by Артем Гаврилов on 20.01.26.
-//
-
 import SwiftUI
+import AVKit
+import AVFoundation
 
 struct SpiritBoxView: View {
-    @StateObject private var audioService = AudioService.shared
-    @State private var isActive = false
+    @StateObject private var videoPlayerManager = VideoPlayerManager()
     
     var body: some View {
-        VStack(spacing: 40) {
-            Spacer()
-            
-            // Spirit Box Display
-            VStack(spacing: 20) {
-                // Title
-                Text("SPIRIT BOX")
-                    .font(.system(size: 24, weight: .bold))
-                    .foregroundColor(Color(hex: "7AFD91"))
-                    .tracking(3)
-                
-                // Status indicator
-                ZStack {
-                    Circle()
-                        .fill(isActive ? Color(hex: "7AFD91").opacity(0.2) : Color.clear)
-                        .frame(width: 150, height: 150)
-                    
-                    Circle()
-                        .stroke(isActive ? Color(hex: "7AFD91") : Color.gray.opacity(0.3), lineWidth: 3)
-                        .frame(width: 150, height: 150)
-                    
-                    if isActive {
-                        Image(systemName: "waveform")
-                            .font(.system(size: 50))
-                            .foregroundColor(Color(hex: "7AFD91"))
-                    } else {
-                        Image(systemName: "waveform.slash")
-                            .font(.system(size: 50))
-                            .foregroundColor(.gray)
-                    }
-                }
-                
-                // Status text
-                Text(isActive ? "SCANNING" : "STANDBY")
-                    .font(.system(size: 18, weight: .semibold))
-                    .foregroundColor(isActive ? Color(hex: "7AFD91") : .gray)
-                    .tracking(2)
+        ZStack {
+            if let player = videoPlayerManager.player {
+                VideoPlayerView(player: player)
+                    .edgesIgnoringSafeArea(.all)
+            } else {
+                Color.black.edgesIgnoringSafeArea(.all)
             }
-            
-            Spacer()
-            
-            // Control button
-            Button(action: {
-                isActive.toggle()
-                if isActive {
-                    audioService.playSpiritSound()
-                } else {
-                    audioService.stopSpiritSound()
-                }
-            }) {
-                Text(isActive ? "STOP" : "START")
-                    .font(.system(size: 20, weight: .bold))
-                    .foregroundColor(.black)
-                    .frame(maxWidth: .infinity)
-                    .padding(.vertical, 16)
-                    .background(isActive ? Color.red : Color(hex: "7AFD91"))
-                    .cornerRadius(12)
-            }
-            .padding(.horizontal, 40)
-            .padding(.bottom, 40)
         }
-        .padding()
+        .onAppear {
+            videoPlayerManager.setupPlayer()
+        }
+        .onDisappear {
+            videoPlayerManager.cleanupPlayer()
+        }
     }
 }
 
-#Preview {
-    SpiritBoxView()
-        .background(Color.black)
+// Отдельная View для AVPlayer
+struct VideoPlayerView: UIViewControllerRepresentable {
+    let player: AVPlayer
+    
+    func makeUIViewController(context: Context) -> AVPlayerViewController {
+        let controller = AVPlayerViewController()
+        controller.player = player
+        controller.showsPlaybackControls = false
+        controller.videoGravity = .resizeAspectFill
+        return controller
+    }
+    
+    func updateUIViewController(_ uiViewController: AVPlayerViewController, context: Context) {}
+}
+
+// Manager для управления памятью и воспроизведением
+class VideoPlayerManager: ObservableObject {
+    @Published var player: AVPlayer?
+    private var playerLooper: AVPlayerLooper?
+    private var playerItem: AVPlayerItem?
+    
+    func setupPlayer() {
+        // Проверяем есть ли уже плеер
+        guard player == nil else {
+            player?.play()
+            return
+        }
+        
+        // Получаем путь к видео из Bundle
+        guard let videoURL = Bundle.main.url(forResource: "candle", withExtension: "mp4") else {
+            print("❌ Видео candle.mp4 не найдено в Bundle")
+            return
+        }
+        
+        // Создаем AVPlayerItem с оптимизацией памяти
+        let asset = AVAsset(url: videoURL)
+        playerItem = AVPlayerItem(asset: asset)
+        
+        // Создаем AVQueuePlayer для зацикливания
+        let queuePlayer = AVQueuePlayer(playerItem: playerItem)
+        
+        // Настройка оптимизации памяти
+        queuePlayer.automaticallyWaitsToMinimizeStalling = false
+        
+        // Зацикливание видео
+        playerLooper = AVPlayerLooper(player: queuePlayer, templateItem: playerItem!)
+        
+        // Отключаем звук если нужно
+        queuePlayer.isMuted = true
+        
+        player = queuePlayer
+        
+        // Устанавливаем рандомную начальную позицию (0-180 секунд для 3-минутного видео)
+        let randomSeconds = Double.random(in: 0...180)
+        let randomTime = CMTime(seconds: randomSeconds, preferredTimescale: 600)
+        
+        queuePlayer.seek(to: randomTime) { finished in
+            if finished {
+                queuePlayer.play()
+                print("✅ Видео запущено с \(Int(randomSeconds)) секунды")
+            }
+        }
+    }
+    
+    func cleanupPlayer() {
+        // Останавливаем воспроизведение
+        player?.pause()
+        
+        // Очищаем все ресурсы
+        playerLooper = nil
+        playerItem = nil
+        player = nil
+        
+        print("🧹 Память очищена")
+    }
+    
+    deinit {
+        cleanupPlayer()
+        print("♻️ VideoPlayerManager освобожден из памяти")
+    }
+}
+
+struct CandleVideoScreen_Previews: PreviewProvider {
+    static var previews: some View {
+        SpiritBoxView()
+    }
 }

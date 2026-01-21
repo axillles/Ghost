@@ -11,6 +11,7 @@ struct OnboardingFlow: View {
     @State private var currentPage = 0
     @State private var canSwipeFromPage0 = false // Можно ли свайпать с 1-го экрана
     @State private var canSwipeFromPage1 = false // Можно ли свайпать со 2-го экрана
+    var onComplete: () -> Void
     
     var body: some View {
         TabView(selection: $currentPage) {
@@ -30,7 +31,7 @@ struct OnboardingFlow: View {
                 .simultaneousGesture(
                     canSwipeFromPage0 ? nil : DragGesture()
                 )
-            Screen6(currentPage: $currentPage)
+            Screen6(currentPage: $currentPage, onComplete: onComplete)
                 .tag(5)
         }
         .tabViewStyle(.page(indexDisplayMode: .never))
@@ -39,5 +40,5 @@ struct OnboardingFlow: View {
 }
 
 #Preview {
-    OnboardingFlow()
+    OnboardingFlow(onComplete: {})
 }

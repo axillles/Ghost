@@ -2,6 +2,7 @@ import SwiftUI
 
 struct Screen6: View {
     @Binding var currentPage: Int
+    var onComplete: () -> Void
     @State private var rotation: Double = 0
     @State private var text1 = ""
     @State private var text2 = ""
@@ -120,7 +121,8 @@ struct Screen6: View {
                 
                 // Continue Button
                 Button(action: {
-                    currentPage += 1
+                    OnboardingService.shared.completeOnboarding()
+                    onComplete()
                 }) {
                     Text("Continue")
                         .font(.system(size: 28, weight: .bold))
@@ -198,6 +200,6 @@ struct Screen6: View {
 
 struct LoadingScreen_Previews: PreviewProvider {
     static var previews: some View {
-        Screen6(currentPage: .constant(0))
+        Screen6(currentPage: .constant(0), onComplete: {})
     }
 }
