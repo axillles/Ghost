@@ -35,6 +35,7 @@ enum Tab: Int, CaseIterable {
 struct MainView: View {
     @StateObject private var viewModel = MainViewModel()
     @StateObject private var cameraService = CameraService.shared
+    @StateObject private var audioManager = AudioManager.shared
     @State private var selectedTab: Tab = .radar
     
     var body: some View {
@@ -58,7 +59,7 @@ struct MainView: View {
                     case .radar:
                         RadarScreen()
                     case .emf:
-                        EMFView()
+                        EMFScreen()
                     case .spiritBox:
                         SpiritBoxView()
                     case .settings:
@@ -76,6 +77,24 @@ struct MainView: View {
         }
         .onAppear {
             cameraService.checkPermission()
+            // Запускаем звук для начального таба
+            updateAudioForTab(selectedTab)
+        }
+        .onChange(of: selectedTab) { newTab in
+            updateAudioForTab(newTab)
+        }
+    }
+    
+    private func updateAudioForTab(_ tab: Tab) {
+        switch tab {
+        case .radar:
+            audioManager.playForMode(.radar)
+        case .emf:
+            audioManager.playForMode(.emf)
+        case .spiritBox:
+            audioManager.playForMode(.spirit)
+        case .settings:
+            audioManager.playForMode(.none)
         }
     }
 }

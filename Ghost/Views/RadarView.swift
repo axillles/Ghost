@@ -92,6 +92,8 @@ struct RadarScreen: View {
 class CameraManager: NSObject, ObservableObject {
     @Published var session = AVCaptureSession()
     private var videoDevice: AVCaptureDevice?
+    private let sessionQueue = DispatchQueue(label: "camera.session.queue")
+    private let configurationSemaphore = DispatchSemaphore(value: 1)
     
     func checkPermission() {
         switch AVCaptureDevice.authorizationStatus(for: .video) {
@@ -111,28 +113,41 @@ class CameraManager: NSObject, ObservableObject {
     }
     
     func setupCamera() {
-        session.beginConfiguration()
-        
-        guard let device = AVCaptureDevice.default(.builtInWideAngleCamera, for: .video, position: .back) else {
-            return
-        }
-        
-        videoDevice = device
-        
-        do {
-            let input = try AVCaptureDeviceInput(device: device)
-            if session.canAddInput(input) {
-                session.addInput(input)
+        sessionQueue.async { [weak self] in
+            guard let self = self else { return }
+            
+            // Захватываем семафор для предотвращения одновременной конфигурации
+            self.configurationSemaphore.wait()
+            defer { self.configurationSemaphore.signal() }
+            
+            // Проверяем, не запущена ли уже сессия
+            if self.session.isRunning {
+                return
             }
             
-            session.sessionPreset = .high
-            session.commitConfiguration()
+            self.session.beginConfiguration()
             
-            DispatchQueue.global(qos: .userInitiated).async {
+            guard let device = AVCaptureDevice.default(.builtInWideAngleCamera, for: .video, position: .back) else {
+                self.session.commitConfiguration()
+                return
+            }
+            
+            self.videoDevice = device
+            
+            do {
+                let input = try AVCaptureDeviceInput(device: device)
+                if self.session.canAddInput(input) {
+                    self.session.addInput(input)
+                }
+                
+                self.session.sessionPreset = .high
+                self.session.commitConfiguration()
+                
                 self.session.startRunning()
+            } catch {
+                self.session.commitConfiguration()
+                print("Camera error: \(error)")
             }
-        } catch {
-            print("Camera error: \(error)")
         }
     }
     
@@ -149,7 +164,20 @@ class CameraManager: NSObject, ObservableObject {
     }
     
     func stopSession() {
-        session.stopRunning()
+        sessionQueue.async { [weak self] in
+            guard let self = self else { return }
+            
+            // Захватываем семафор, чтобы дождаться завершения конфигурации
+            self.configurationSemaphore.wait()
+            defer { self.configurationSemaphore.signal() }
+            
+            // Убеждаемся, что сессия запущена перед остановкой
+            guard self.session.isRunning else {
+                return
+            }
+            
+            self.session.stopRunning()
+        }
     }
 }
 

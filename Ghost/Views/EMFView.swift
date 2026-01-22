@@ -6,45 +6,78 @@
 //
 
 import SwiftUI
+import AVFoundation
 
-struct EMFView: View {
-    @ObservedObject var magnetometerService = MagnetometerService.shared
+struct EMFScreen: View {
+    // Используем менеджер камеры из предыдущего задания
+    @StateObject private var cameraManager = CameraManager()
+    // Наш новый сервис логики EMF
+    @StateObject private var emfService = EMFService()
+    
+    @State private var isFlashlightOn = false
     
     var body: some View {
-        VStack(spacing: 30) {
-            // EMF Meter Display
-            VStack(spacing: 15) {
-                Text("EMF READER")
-                    .font(.system(size: 16, weight: .semibold))
-                    .foregroundColor(Color(hex: "7AFD91"))
-                    .tracking(2)
-                
-                // EMF Value Display
-                ZStack {
-                    // Background circle
-                    Circle()
-                        .stroke(Color(hex: "7AFD91").opacity(0.3), lineWidth: 3)
-                        .frame(width: 200, height: 200)
-                    
-                    // Value
-                    Text("\(Int(magnetometerService.reading.value))")
-                        .font(.system(size: 64, weight: .bold))
-                        .foregroundColor(Color(hex: "7AFD91"))
-                }
-                
-                // Level indicator
-                Text("LEVEL \(Int(magnetometerService.reading.value / 10))")
-                    .font(.system(size: 14, weight: .medium))
-                    .foregroundColor(.white.opacity(0.7))
-            }
+        ZStack {
+            // 1. Фоновый слой - Камера
+            CameraPreviewView(session: cameraManager.session)
+                .edgesIgnoringSafeArea(.all)
             
-            Spacer()
+            // Темная подложка для контраста
+            Color.black.opacity(0.4)
+                .edgesIgnoringSafeArea(.all)
+            
+            VStack {
+                Spacer()
+                
+                // 2. Основной датчик
+                // Обрезаем нижнюю половину, чтобы получился полукруг как на макете
+
+                
+                // 3. Нижняя панель с кнопкой фонарика
+                HStack(alignment: .bottom) {
+                    Spacer()
+                    EMFGaugeView(value: emfService.currentValue)
+                        .frame(width: 300, height: 150, alignment: .top)
+                         // Обрезаем все что ниже центра
+                        .padding(.bottom, 10)
+                    Spacer()
+                    
+                    // Кнопка фонарика (Справа внизу)
+                    Button(action: {
+                        isFlashlightOn.toggle()
+                        cameraManager.toggleFlashlight(on: isFlashlightOn)
+                    }) {
+                        Image(systemName: isFlashlightOn ? "flashlight.on.fill" : "flashlight.off.fill")
+                            .font(.system(size: 24))
+                            .foregroundColor(isFlashlightOn ? .black : .white)
+                            .padding(16)
+                            .background(isFlashlightOn ? Color.white : Color.black.opacity(0.6))
+                            .clipShape(Circle())
+                            .overlay(
+                                Circle()
+                                    .stroke(Color.white.opacity(isFlashlightOn ? 0 : 0.5), lineWidth: 1)
+                            )
+                    }
+                    .padding(.trailing, 30)
+                    .padding(.bottom, 50)
+                }
+            }
         }
-        .padding()
+        .onAppear {
+            cameraManager.checkPermission()
+            emfService.startSensor()
+        }
+        .onDisappear {
+            cameraManager.stopSession()
+            emfService.stopSensor()
+        }
     }
 }
 
-#Preview {
-    EMFView()
-        .background(Color.black)
+// Для предпросмотра в Xcode
+struct EMFScreen_Previews: PreviewProvider {
+    static var previews: some View {
+        EMFScreen()
+            .preferredColorScheme(.dark)
+    }
 }

@@ -11,6 +11,7 @@ struct OnboardingFlow: View {
     @State private var currentPage = 0
     @State private var canSwipeFromPage0 = false // Можно ли свайпать с 1-го экрана
     @State private var canSwipeFromPage1 = false // Можно ли свайпать со 2-го экрана
+    @StateObject private var audioManager = AudioManager.shared
     var onComplete: () -> Void
     
     var body: some View {
@@ -31,11 +32,23 @@ struct OnboardingFlow: View {
                 .simultaneousGesture(
                     canSwipeFromPage0 ? nil : DragGesture()
                 )
-            Screen6(currentPage: $currentPage, onComplete: onComplete)
+            Screen6(currentPage: $currentPage, onComplete: {
+                // Останавливаем музыку перед завершением onboarding
+                audioManager.stopOnboardingMusic()
+                onComplete()
+            })
                 .tag(5)
         }
         .tabViewStyle(.page(indexDisplayMode: .never))
         .ignoresSafeArea()
+        .onAppear {
+            // Запускаем зацикленную музыку при появлении onboarding
+            audioManager.playOnboardingMusic()
+        }
+        .onDisappear {
+            // Останавливаем музыку при закрытии onboarding
+            audioManager.stopOnboardingMusic()
+        }
     }
 }
 

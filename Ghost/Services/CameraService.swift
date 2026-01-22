@@ -45,6 +45,7 @@ final class CameraService: NSObject, ObservableObject {
             session.beginConfiguration()
             
             guard let device = AVCaptureDevice.default(.builtInWideAngleCamera, for: .video, position: .back) else {
+                session.commitConfiguration()
                 return
             }
             
@@ -57,6 +58,7 @@ final class CameraService: NSObject, ObservableObject {
             session.commitConfiguration()
             session.startRunning()
         } catch {
+            session.commitConfiguration()
             print("Camera setup error: \(error)")
         }
     }
