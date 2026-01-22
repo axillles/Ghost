@@ -80,21 +80,6 @@ struct PaywallView: View {
     }
 }
 
-struct FeatureRow: View {
-    let icon: String
-    let text: String
-    
-    var body: some View {
-        HStack(spacing: 15) {
-            Image(systemName: icon)
-                .foregroundColor(.blue)
-                .frame(width: 30)
-            Text(text)
-                .foregroundColor(.white)
-            Spacer()
-        }
-    }
-}
 
 #Preview {
     PaywallView(isPresented: .constant(true), mainViewModel: MainViewModel())

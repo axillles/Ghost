@@ -16,17 +16,20 @@ Ghost/
 │   ├── RadarService.swift          # Симуляция радара
 │   ├── MagnetometerService.swift   # Симуляция магнитометра
 │   ├── OnboardingService.swift     # Логика онбординга
-│   └── PaywallService.swift        # Логика paywall
+│   ├── PaywallService.swift        # Логика paywall
+│   └── SubscriptionService.swift   # Интеграция с Revenue Cat
 ├── ViewModels/
 │   ├── MainViewModel.swift         # ViewModel главного экрана
 │   ├── OnboardingViewModel.swift   # ViewModel онбординга
-│   └── PaywallViewModel.swift      # ViewModel paywall
+│   ├── PaywallViewModel.swift      # ViewModel paywall
+│   └── SubscriptionViewModel.swift # ViewModel подписок
 ├── Views/
 │   ├── MainView.swift              # Главный экран
 │   ├── RadarView.swift             # Вид радара
 │   ├── MagnetometerView.swift      # Вид магнитометра
 │   ├── OnboardingView.swift        # Экран онбординга
-│   └── PaywallView.swift           # Экран paywall
+│   ├── PaywallView.swift           # Экран paywall
+│   └── SubscriptionView.swift      # Экран подписок
 ├── GhostApp.swift                  # Точка входа приложения
 └── Info.plist                      # Разрешения (камера, микрофон)
 ```
@@ -38,6 +41,7 @@ Ghost/
 - **Фейковый магнитометр**: Симуляция показаний с анимацией свечи
 - **Случайные звуки**: Воспроизведение предзагруженных аудиофайлов
 - **Onboarding**: Экран приветствия при первом запуске
+- **Подписки**: Экран подписок с интеграцией Revenue Cat (месяц и год)
 - **Paywall**: Экран для разблокировки Premium функций
 - **Настройки**: Управление звуком и чувствительностью радара
 
@@ -80,12 +84,23 @@ Ghost/
 
 Все данные хранятся в UserDefaults через StorageService. CoreData не используется.
 
-## Интеграция StoreKit
+## Интеграция Revenue Cat
 
-Для реальных покупок необходимо:
-1. Настроить StoreKit в проекте
-2. Обновить PaywallService для работы с реальными покупками
-3. Добавить обработку восстановления покупок
+Приложение использует Revenue Cat для управления подписками. Для настройки:
+
+1. Следуйте инструкциям в файле `REVENUE_CAT_SETUP.md`
+2. Добавьте Revenue Cat SDK через Swift Package Manager
+3. Настройте продукты в App Store Connect
+4. Настройте Revenue Cat Dashboard
+5. Обновите API ключ в `SubscriptionService.swift`
+
+### Подписки
+
+Приложение поддерживает две подписки:
+- **Месячная подписка**: Автоматически возобновляемая подписка на 1 месяц
+- **Годовая подписка**: Автоматически возобновляемая подписка на 1 год
+
+Экран подписок появляется автоматически через 5 секунд после завершения онбординга (если нет активной подписки).
 
 ## Следующие шаги
 

@@ -11,11 +11,12 @@ final class PaywallService {
     static let shared = PaywallService()
     
     private let storage = StorageService.shared
+    private let subscriptionService = SubscriptionService.shared
     
     private init() {}
     
     func hasUnlockedPremium() -> Bool {
-        return storage.loadSettings().hasUnlockedPremium
+        return subscriptionService.hasActiveSubscription()
     }
     
     func unlockPremium() {
@@ -24,9 +25,8 @@ final class PaywallService {
         storage.saveSettings(settings)
     }
     
-    // Здесь можно добавить интеграцию с StoreKit для реальных покупок
+    // Устаревший метод, используйте SubscriptionService для работы с подписками
     func purchasePremium() {
-        // TODO: Интеграция с StoreKit
         unlockPremium()
     }
 }
