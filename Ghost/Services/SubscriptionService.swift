@@ -18,18 +18,14 @@ final class SubscriptionService {
     }
     
     private func configureRevenueCat() {
-        // TODO: Replace with your Revenue Cat API key
+        // Revenue Cat API key (тестовый или продакшн)
         // Get it from Revenue Cat Dashboard: https://app.revenuecat.com
         let apiKey = "test_aRwiKWuLDbfaYDatarwVPIEpRgM"
         
-        // Check if API key has been updated
-        guard apiKey != "test_aRwiKWuLDbfaYDatarwVPIEpRgM" else {
-            print("⚠️ Revenue Cat API key not configured! Please update SubscriptionService.swift")
-            return
-        }
-        
         Purchases.logLevel = .debug
         Purchases.configure(withAPIKey: apiKey)
+        
+        print("✅ Revenue Cat configured with API key: \(apiKey.prefix(10))...")
         
         // Set user identifier (optional)
         // Purchases.shared.logIn("user_id") { customerInfo, created, error in }
