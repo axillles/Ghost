@@ -44,10 +44,10 @@ final class SubscriptionViewModel: ObservableObject {
                     let formattedPrice = product.localizedPriceString
                     
                     // Determine subscription type by identifier
-                    if package.storeProduct.productIdentifier.contains("month") || 
+                    if package.storeProduct.productIdentifier.contains("month") ||
                        package.storeProduct.productIdentifier.contains("monthly") {
                         monthlyPrice = formattedPrice
-                    } else if package.storeProduct.productIdentifier.contains("year") || 
+                    } else if package.storeProduct.productIdentifier.contains("year") ||
                               package.storeProduct.productIdentifier.contains("yearly") {
                         yearlyPrice = formattedPrice
                     }
@@ -88,7 +88,39 @@ final class SubscriptionViewModel: ObservableObject {
                 return
             }
             
+            let product = selectedPackage.storeProduct
             let (_, customerInfo, _) = try await Purchases.shared.purchase(package: selectedPackage)
+            
+            // Проверяем, была ли это покупка или триал
+            let hasActiveEntitlement = customerInfo.entitlements.active.count > 0
+            
+            if hasActiveEntitlement {
+                let productId = product.productIdentifier
+                
+                // Проверяем, это триал или покупка через период подписки
+                if let activeEntitlement = customerInfo.entitlements.active.values.first {
+                    let period = activeEntitlement.periodType
+                    
+                    if period == .trial {
+                        // Это триал
+                        AnalyticsService.shared.logTrialStart(productId: productId)
+                    } else {
+                        // Это покупка
+                        // Извлекаем валюту из localizedPriceString
+                        let priceString = product.localizedPriceString
+                        let currency = extractCurrency(from: priceString) ?? "USD"
+                        
+                        // Конвертируем Decimal в Double через NSDecimalNumber
+                        let price = NSDecimalNumber(decimal: product.price).doubleValue
+                        
+                        AnalyticsService.shared.logPurchase(
+                            productId: productId,
+                            price: price,
+                            currency: currency
+                        )
+                    }
+                }
+            }
             
             // Покупка успешна
             subscriptionService.updateSubscriptionStatus(customerInfo)
@@ -130,5 +162,21 @@ final class SubscriptionViewModel: ObservableObject {
     
     private func checkSubscriptionStatus() {
         hasActiveSubscription = subscriptionService.hasActiveSubscription()
+    }
+    
+    // Вспомогательная функция для извлечения кода валюты из локализованной строки цены
+    private func extractCurrency(from priceString: String) -> String? {
+        // Попытка извлечь код валюты из строки (например, "$9.99" -> "USD", "9,99 €" -> "EUR")
+        // Это упрощенный подход, можно использовать более сложную логику
+        if priceString.contains("$") {
+            return "USD"
+        } else if priceString.contains("€") {
+            return "EUR"
+        } else if priceString.contains("£") {
+            return "GBP"
+        } else if priceString.contains("₽") {
+            return "RUB"
+        }
+        return nil
     }
 }

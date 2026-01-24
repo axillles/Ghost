@@ -60,7 +60,47 @@ struct PaywallView: View {
             Task {
                 do {
                     let customerInfo = try await Purchases.shared.customerInfo()
+                    let previousStatus = SubscriptionService.shared.hasActiveSubscription()
+                    
                     SubscriptionService.shared.updateSubscriptionStatus(customerInfo)
+                    
+                    let currentStatus = SubscriptionService.shared.hasActiveSubscription()
+                    
+                    // Если статус изменился с неактивного на активный, значит была покупка
+                    if !previousStatus && currentStatus {
+                        // Проверяем активные entitlements для получения информации о продукте
+                        if let activeEntitlement = customerInfo.entitlements.active.values.first {
+                            let productIdentifier = activeEntitlement.productIdentifier
+                            
+                            // Проверяем, это триал или покупка через период подписки
+                            let period = activeEntitlement.periodType
+                            
+                            if period == .trial {
+                                // Это триал
+                                AnalyticsService.shared.logTrialStart(productId: productIdentifier)
+                            } else {
+                                // Это покупка
+                                // Получаем информацию о продукте для цены
+                                
+                                let offerings = try await Purchases.shared.offerings()
+                                if let package = offerings.current?.availablePackages.first(where: { $0.storeProduct.productIdentifier == productIdentifier }) {
+                                    let product = package.storeProduct
+                                    let price = NSDecimalNumber(decimal: product.price).doubleValue
+                                    let currency = extractCurrency(from: product.localizedPriceString) ?? "USD"
+                                    
+                                    AnalyticsService.shared.logPurchase(
+                                        productId: productIdentifier,
+                                        price: price,
+                                        currency: currency
+                                    )
+                                } else {
+                                    // Если не можем получить продукт, логируем без цены
+                                    AnalyticsService.shared.logPurchase(productId: productIdentifier)
+                                }
+                            }
+                        }
+                    }
+                    
                     await MainActor.run {
                         mainViewModel.settings = StorageService.shared.loadSettings()
                     }
@@ -89,6 +129,20 @@ struct PaywallView: View {
                 }
             }
         }
+    }
+    
+    // Вспомогательная функция для извлечения кода валюты из локализованной строки цены
+    private func extractCurrency(from priceString: String) -> String? {
+        if priceString.contains("$") {
+            return "USD"
+        } else if priceString.contains("€") {
+            return "EUR"
+        } else if priceString.contains("£") {
+            return "GBP"
+        } else if priceString.contains("₽") {
+            return "RUB"
+        }
+        return nil
     }
 }
 

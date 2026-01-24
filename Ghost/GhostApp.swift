@@ -6,11 +6,20 @@
 //
 
 import SwiftUI
+import FirebaseCore
 
 @main
 struct GhostApp: App {
     @State private var showOnboarding = !OnboardingService.shared.hasCompletedOnboarding()
     @State private var showSubscription = false
+    
+    init() {
+        // Инициализация Firebase
+        FirebaseApp.configure()
+        
+        // Отслеживаем первый запуск приложения
+        checkAndLogFirstOpen()
+    }
     
     var body: some Scene {
         WindowGroup {
@@ -31,6 +40,16 @@ struct GhostApp: App {
                         SubscriptionView(isPresented: $showSubscription, mainViewModel: MainViewModel())
                     }
             }
+        }
+    }
+    
+    /// Проверяет и логирует первый запуск приложения
+    private func checkAndLogFirstOpen() {
+        let hasLoggedFirstOpen = UserDefaults.standard.bool(forKey: "has_logged_first_open")
+        
+        if !hasLoggedFirstOpen {
+            AnalyticsService.shared.logFirstOpen()
+            UserDefaults.standard.set(true, forKey: "has_logged_first_open")
         }
     }
 }
