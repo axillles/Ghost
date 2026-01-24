@@ -10,6 +10,8 @@ import SwiftUI
 import Combine
 
 final class EMFService: ObservableObject {
+    static let shared = EMFService()
+    
     // Текущее значение для стрелки (0-300)
     @Published var currentValue: Double = 0
     
@@ -21,8 +23,8 @@ final class EMFService: ObservableObject {
     private var lastChaosUpdateTime: Double = 0
     private var chaosTarget: Double = 0
     
-    init() {
-        startSensor()
+    private init() {
+        // Не запускаем автоматически, только по запросу
     }
     
     func startSensor() {

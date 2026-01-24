@@ -2,20 +2,13 @@ import SwiftUI
 import AVFoundation
 
 struct RadarScreen: View {
-    @StateObject private var cameraManager = CameraManager()
     @ObservedObject var radarService = RadarService.shared
     @State private var isFlashlightOn = false
     @State private var isRadarActive = true
     
     var body: some View {
         ZStack {
-            // Camera Background
-            CameraPreviewView(session: cameraManager.session)
-                .edgesIgnoringSafeArea(.all)
-            
-            // Dark overlay
-            Color.black.opacity(0.3)
-                .edgesIgnoringSafeArea(.all)
+            // Камера уже отображается в MainView как фон, здесь только контент
             
             VStack {
                 Spacer()
@@ -55,7 +48,7 @@ struct RadarScreen: View {
                     Spacer()
                     Button(action: {
                         isFlashlightOn.toggle()
-                        cameraManager.toggleFlashlight(on: isFlashlightOn)
+                        toggleFlashlight(on: isFlashlightOn)
                     }) {
                         Image(systemName: isFlashlightOn ? "flashlight.on.fill" : "flashlight.off.fill")
                             .font(.system(size: 32))
@@ -69,11 +62,12 @@ struct RadarScreen: View {
             }
         }
         .onAppear {
-            cameraManager.checkPermission()
-            radarService.startRadar()
+            // Запускаем асинхронно, чтобы не блокировать UI
+            DispatchQueue.main.async {
+                radarService.startRadar()
+            }
         }
         .onDisappear {
-            cameraManager.stopSession()
             radarService.stopRadar()
         }
     }
@@ -86,73 +80,10 @@ struct RadarScreen: View {
             radarService.stopRadar()
         }
     }
-}
-
-// Camera Manager
-class CameraManager: NSObject, ObservableObject {
-    @Published var session = AVCaptureSession()
-    private var videoDevice: AVCaptureDevice?
-    private let sessionQueue = DispatchQueue(label: "camera.session.queue")
-    private let configurationSemaphore = DispatchSemaphore(value: 1)
     
-    func checkPermission() {
-        switch AVCaptureDevice.authorizationStatus(for: .video) {
-        case .authorized:
-            setupCamera()
-        case .notDetermined:
-            AVCaptureDevice.requestAccess(for: .video) { granted in
-                if granted {
-                    DispatchQueue.main.async {
-                        self.setupCamera()
-                    }
-                }
-            }
-        default:
-            break
-        }
-    }
-    
-    func setupCamera() {
-        sessionQueue.async { [weak self] in
-            guard let self = self else { return }
-            
-            // Захватываем семафор для предотвращения одновременной конфигурации
-            self.configurationSemaphore.wait()
-            defer { self.configurationSemaphore.signal() }
-            
-            // Проверяем, не запущена ли уже сессия
-            if self.session.isRunning {
-                return
-            }
-            
-            self.session.beginConfiguration()
-            
-            guard let device = AVCaptureDevice.default(.builtInWideAngleCamera, for: .video, position: .back) else {
-                self.session.commitConfiguration()
-                return
-            }
-            
-            self.videoDevice = device
-            
-            do {
-                let input = try AVCaptureDeviceInput(device: device)
-                if self.session.canAddInput(input) {
-                    self.session.addInput(input)
-                }
-                
-                self.session.sessionPreset = .high
-                self.session.commitConfiguration()
-                
-                self.session.startRunning()
-            } catch {
-                self.session.commitConfiguration()
-                print("Camera error: \(error)")
-            }
-        }
-    }
-    
-    func toggleFlashlight(on: Bool) {
-        guard let device = videoDevice, device.hasTorch else { return }
+    private func toggleFlashlight(on: Bool) {
+        guard let device = AVCaptureDevice.default(.builtInWideAngleCamera, for: .video, position: .back),
+              device.hasTorch else { return }
         
         do {
             try device.lockForConfiguration()
@@ -160,50 +91,6 @@ class CameraManager: NSObject, ObservableObject {
             device.unlockForConfiguration()
         } catch {
             print("Flashlight error: \(error)")
-        }
-    }
-    
-    func stopSession() {
-        sessionQueue.async { [weak self] in
-            guard let self = self else { return }
-            
-            // Захватываем семафор, чтобы дождаться завершения конфигурации
-            self.configurationSemaphore.wait()
-            defer { self.configurationSemaphore.signal() }
-            
-            // Убеждаемся, что сессия запущена перед остановкой
-            guard self.session.isRunning else {
-                return
-            }
-            
-            self.session.stopRunning()
-        }
-    }
-}
-
-// Camera Preview
-struct CameraPreviewView: UIViewRepresentable {
-    let session: AVCaptureSession
-    
-    func makeUIView(context: Context) -> UIView {
-        let view = UIView(frame: .zero)
-        
-        let previewLayer = AVCaptureVideoPreviewLayer(session: session)
-        previewLayer.videoGravity = .resizeAspectFill
-        view.layer.addSublayer(previewLayer)
-        
-        DispatchQueue.main.async {
-            previewLayer.frame = view.bounds
-        }
-        
-        return view
-    }
-    
-    func updateUIView(_ uiView: UIView, context: Context) {
-        if let layer = uiView.layer.sublayers?.first as? AVCaptureVideoPreviewLayer {
-            DispatchQueue.main.async {
-                layer.frame = uiView.bounds
-            }
         }
     }
 }

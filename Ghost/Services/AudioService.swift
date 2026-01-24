@@ -71,6 +71,7 @@ final class AudioService: ObservableObject {
     
     func stopAllSounds() {
         audioPlayer?.stop()
+        audioPlayer = nil // Полностью очищаем плеер
     }
     
     func addSoundFiles(_ files: [String]) {

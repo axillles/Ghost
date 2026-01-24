@@ -10,7 +10,8 @@ import StoreKit
 import UIKit
 
 struct SettingsView: View {
-    @StateObject private var viewModel = MainViewModel()
+    @ObservedObject var viewModel: MainViewModel
+    @ObservedObject private var audioManager = AudioManager.shared
     @State private var privacyPolicyURL = "https://project14105329.tilda.ws/"
     @State private var termsOfUseURL = "https://www.apple.com/legal/internet-services/itunes/dev/stdeula/"
     @State private var showShareSheet = false
@@ -198,5 +199,5 @@ struct SettingsButton: View {
 }
 
 #Preview {
-    SettingsView()
+    SettingsView(viewModel: MainViewModel())
 }

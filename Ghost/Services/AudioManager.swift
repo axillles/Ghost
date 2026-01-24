@@ -126,164 +126,251 @@ final class AudioManager: NSObject, ObservableObject {
         return nil
     }
     
+    /// Главный метод переключения режима звука
     func playForMode(_ mode: AudioMode) {
-        // Если режим не изменился, ничего не делаем
-        guard currentMode != mode else { return }
+        // ВСЕГДА останавливаем текущий звук перед переключением (даже если режим тот же)
+        // Это гарантирует моментальную остановку и предотвращает наслоение
+        stopImmediately()
         
-        // Останавливаем текущее воспроизведение
-        stop()
+        // Если режим тот же, просто останавливаем и выходим
+        guard currentMode != mode else {
+            print("ℹ️ Mode already set to \(mode), stopped current playback")
+            currentMode = mode
+            return
+        }
         
+        print("🔄 Switching from \(currentMode) to \(mode)")
+        
+        // Устанавливаем новый режим
         currentMode = mode
         
+        // Запускаем звук для нового режима
         switch mode {
         case .radar:
-            playRadarSound()
+            playRandomRadarSound()
         case .emf:
             playEMFSound()
         case .spirit:
-            playSpiritSound()
+            playRandomSpiritSound()
         case .none:
-            break
+            print("🔇 Mode set to none - no sound")
         }
     }
     
-    private func playRadarSound() {
-        guard !radarFiles.isEmpty, currentMode == .radar else { return }
+    /// МОМЕНТАЛЬНАЯ остановка всех звуков
+    private func stopImmediately() {
+        if let player = audioPlayer {
+            player.stop()
+            player.delegate = nil
+            print("⏹️ Audio stopped immediately")
+        }
+        audioPlayer = nil
+    }
+    
+    /// Воспроизведение случайного звука Radar
+    private func playRandomRadarSound() {
+        guard !radarFiles.isEmpty else {
+            print("❌ No radar files available")
+            return
+        }
         
-        // Выбираем случайный файл
+        guard currentMode == .radar else {
+            print("⚠️ Mode changed, cancelling radar playback")
+            return
+        }
+        
         let randomFile = radarFiles.randomElement()!
         
-        // Используем кэшированный URL или пытаемся найти файл
         if let url = radarURLs[randomFile] {
             playSound(url: url, shouldLoop: false)
         } else {
-            // Если URL не найден в кэше, пытаемся найти файл
-            if let url = findSoundFile(fileName: randomFile, subdirectory: "Sounds/Radar") {
-                radarURLs[randomFile] = url
-                playSound(url: url, shouldLoop: false)
-            } else {
-                print("❌ Error: Radar sound file \(randomFile).mp3 not found")
-            }
+            print("❌ Radar sound file \(randomFile).mp3 not found")
         }
     }
     
+    /// Воспроизведение EMF звука (зацикленный)
     private func playEMFSound() {
-        guard currentMode == .emf else { return }
+        guard currentMode == .emf else {
+            print("⚠️ Mode changed, cancelling EMF playback")
+            return
+        }
         
-        // Используем кэшированный URL или пытаемся найти файл
         if let url = emfURL {
             playSound(url: url, shouldLoop: true)
         } else {
-            // Если URL не найден в кэше, пытаемся найти файл
-            if let url = findSoundFile(fileName: emfFile, subdirectory: "Sounds/EMF") {
-                emfURL = url
-                playSound(url: url, shouldLoop: true)
-            } else {
-                print("❌ Error: EMF sound file \(emfFile).mp3 not found")
-            }
+            print("❌ EMF sound file not found")
         }
     }
     
-    private func playSpiritSound() {
-        guard !spiritFiles.isEmpty, currentMode == .spirit else { return }
+    /// Воспроизведение случайного звука Spirit
+    private func playRandomSpiritSound() {
+        guard !spiritFiles.isEmpty else {
+            print("❌ No spirit files available")
+            return
+        }
         
-        // Выбираем случайный файл
+        guard currentMode == .spirit else {
+            print("⚠️ Mode changed, cancelling spirit playback")
+            return
+        }
+        
         let randomFile = spiritFiles.randomElement()!
         
-        // Используем кэшированный URL или пытаемся найти файл
         if let url = spiritURLs[randomFile] {
             playSound(url: url, shouldLoop: false)
         } else {
-            // Если URL не найден в кэше, пытаемся найти файл
-            if let url = findSoundFile(fileName: randomFile, subdirectory: "Sounds/Spirit") {
-                spiritURLs[randomFile] = url
-                playSound(url: url, shouldLoop: false)
-            } else {
-                print("❌ Error: Spirit sound file \(randomFile).mp3 not found")
-            }
+            print("❌ Spirit sound file \(randomFile).mp3 not found")
         }
     }
     
+    /// Основной метод воспроизведения звука
     private func playSound(url: URL, shouldLoop: Bool) {
         do {
-            audioPlayer = try AVAudioPlayer(contentsOf: url)
+            let newPlayer = try AVAudioPlayer(contentsOf: url)
+            
+            // Финальная проверка: режим не изменился
+            guard currentMode != .none else {
+                print("⚠️ Mode is none, not playing sound")
+                return
+            }
+            
+            // Устанавливаем плеер
+            audioPlayer = newPlayer
             audioPlayer?.delegate = self
             audioPlayer?.volume = Float(volume)
             audioPlayer?.numberOfLoops = shouldLoop ? -1 : 0
-            audioPlayer?.play()
+            audioPlayer?.prepareToPlay()
+            
+            let didStart = audioPlayer?.play() ?? false
+            
+            if didStart {
+                print("▶️ Playing: \(url.lastPathComponent) | Loop: \(shouldLoop) | Mode: \(currentMode)")
+            } else {
+                print("❌ Failed to start playback")
+            }
+            
         } catch {
-            print("❌ Error playing sound: \(error)")
+            print("❌ Error creating audio player: \(error.localizedDescription)")
         }
     }
     
+    /// Полная остановка (публичный метод)
     func stop() {
-        audioPlayer?.stop()
-        audioPlayer = nil
+        print("🛑 Stop called")
+        stopImmediately()
         currentMode = .none
     }
     
     func pause() {
         audioPlayer?.pause()
+        print("⏸️ Audio paused")
     }
     
     func resume() {
         audioPlayer?.play()
+        print("▶️ Audio resumed")
     }
     
-    // Метод для воспроизведения Spirit_6 в зацикленном режиме (для onboarding)
+    // MARK: - Onboarding Music
+    
     func playOnboardingMusic() {
-        // Останавливаем текущее воспроизведение, если есть
         stop()
         
-        // Ищем файл Spirit_6
         let fileName = "Spirit_6"
         if let url = spiritURLs[fileName] ?? findSoundFile(fileName: fileName, subdirectory: "Sounds/Spirit") {
             do {
                 audioPlayer = try AVAudioPlayer(contentsOf: url)
-                audioPlayer?.delegate = nil // Не нужен делегат для зацикленного звука
+                audioPlayer?.delegate = nil
                 audioPlayer?.volume = Float(volume)
-                audioPlayer?.numberOfLoops = -1 // Зацикливание
+                audioPlayer?.numberOfLoops = -1
+                audioPlayer?.prepareToPlay()
                 audioPlayer?.play()
                 print("✅ Playing onboarding music: \(fileName).mp3")
             } catch {
                 print("❌ Error playing onboarding music: \(error)")
             }
         } else {
-            print("❌ Error: Onboarding music file \(fileName).mp3 not found")
+            print("❌ Onboarding music file not found")
         }
     }
     
-    // Метод для остановки onboarding музыки
     func stopOnboardingMusic() {
         stop()
+    }
+    
+    // MARK: - Preload (для оптимизации)
+    
+    func preloadAllSounds() {
+        print("🔄 Preloading all sounds...")
+        
+        // Предзагрузка по одному файлу каждого типа
+        if let radarURL = radarURLs.values.first {
+            _ = try? AVAudioPlayer(contentsOf: radarURL)
+        }
+        
+        if let spiritURL = spiritURLs.values.first {
+            _ = try? AVAudioPlayer(contentsOf: spiritURL)
+        }
+        
+        if let emfURL = emfURL {
+            _ = try? AVAudioPlayer(contentsOf: emfURL)
+        }
+        
+        print("✅ All sounds preloaded")
     }
 }
 
 // MARK: - AVAudioPlayerDelegate
+
 extension AudioManager: AVAudioPlayerDelegate {
     func audioPlayerDidFinishPlaying(_ player: AVAudioPlayer, successfully flag: Bool) {
-        // Если звук закончился и это режим с случайными звуками, запускаем следующий
-        // Добавляем небольшую задержку для более естественного воспроизведения
+        // Проверяем, что это текущий плеер
+        guard player === audioPlayer else {
+            print("⚠️ Finished player is not current player")
+            return
+        }
+        
+        print("✅ Sound finished playing successfully: \(flag)")
+        
+        // Запускаем следующий РАНДОМНЫЙ звук после короткой паузы
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) { [weak self] in
             guard let self = self else { return }
-            if self.currentMode == .radar {
-                self.playRadarSound()
-            } else if self.currentMode == .spirit {
-                self.playSpiritSound()
+            
+            // Проверяем, что режим всё ещё активен
+            switch self.currentMode {
+            case .radar:
+                print("🔄 Playing next random radar sound")
+                self.playRandomRadarSound()
+            case .spirit:
+                print("🔄 Playing next random spirit sound")
+                self.playRandomSpiritSound()
+            case .emf:
+                // EMF зациклен, не нужно запускать следующий
+                break
+            case .none:
+                print("ℹ️ Mode is none, not playing next sound")
             }
         }
     }
     
     func audioPlayerDecodeErrorDidOccur(_ player: AVAudioPlayer, error: Error?) {
-        print("Audio decode error: \(error?.localizedDescription ?? "Unknown error")")
-        // При ошибке также пытаемся запустить следующий звук
-        if currentMode == .radar {
-            DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) { [weak self] in
-                self?.playRadarSound()
-            }
-        } else if currentMode == .spirit {
-            DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) { [weak self] in
-                self?.playSpiritSound()
+        print("❌ Audio decode error: \(error?.localizedDescription ?? "Unknown")")
+        
+        guard player === audioPlayer else { return }
+        
+        // При ошибке пробуем запустить другой звук
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) { [weak self] in
+            guard let self = self else { return }
+            
+            switch self.currentMode {
+            case .radar:
+                print("🔄 Retrying radar after error")
+                self.playRandomRadarSound()
+            case .spirit:
+                print("🔄 Retrying spirit after error")
+                self.playRandomSpiritSound()
+            default:
+                break
             }
         }
     }

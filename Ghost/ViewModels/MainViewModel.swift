@@ -15,6 +15,7 @@ final class MainViewModel: ObservableObject {
     
     private let storage = StorageService.shared
     private let audioService = AudioService.shared
+    private let audioManager = AudioManager.shared
     private let radarService = RadarService.shared
     private var cancellables = Set<AnyCancellable>()
     private var soundTimer: Timer?
@@ -22,7 +23,13 @@ final class MainViewModel: ObservableObject {
     init() {
         settings = storage.loadSettings()
         radarService.setSensitivity(settings.radarSensitivity)
+        // Применяем настройки к обоим аудио сервисам
         audioService.volume = settings.volume
+        audioManager.volume = settings.volume
+        // Если звуки выключены, останавливаем музыку
+        if !settings.soundEnabled {
+            audioManager.stop()
+        }
         startRandomSounds()
     }
     
@@ -46,7 +53,8 @@ final class MainViewModel: ObservableObject {
     func stopRandomSounds() {
         soundTimer?.invalidate()
         soundTimer = nil
-        audioService.stopAllSounds() // Добавьте этот метод в AudioService если его нет
+        // Полностью останавливаем все случайные звуки
+        audioService.stopAllSounds()
     }
     
     func toggleSound() {
@@ -67,8 +75,11 @@ final class MainViewModel: ObservableObject {
         
         if enabled {
             startRandomSounds()
+            // Музыка будет включена автоматически через onChange в MainView
         } else {
             stopRandomSounds()
+            // Выключаем всю музыку в приложении
+            audioManager.stop()
         }
     }
     
@@ -81,7 +92,9 @@ final class MainViewModel: ObservableObject {
     func updateVolume(_ value: Double) {
         settings.volume = value
         storage.saveSettings(settings)
+        // Обновляем громкость во всех аудио сервисах
         audioService.volume = value
+        audioManager.volume = value
     }
     
     func showPaywallIfNeeded() {

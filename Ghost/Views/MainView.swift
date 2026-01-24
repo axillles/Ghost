@@ -34,8 +34,8 @@ enum Tab: Int, CaseIterable {
 
 struct MainView: View {
     @StateObject private var viewModel = MainViewModel()
-    @StateObject private var cameraService = CameraService.shared
-    @StateObject private var audioManager = AudioManager.shared
+    @ObservedObject private var cameraService = CameraService.shared
+    @ObservedObject private var audioManager = AudioManager.shared
     @State private var selectedTab: Tab = .radar
     
     var body: some View {
@@ -63,7 +63,7 @@ struct MainView: View {
                     case .spiritBox:
                         SpiritBoxView()
                     case .settings:
-                        SettingsView()
+                        SettingsView(viewModel: viewModel)
                     }
                 }
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
@@ -76,25 +76,65 @@ struct MainView: View {
             PaywallView(isPresented: $viewModel.showPaywall, mainViewModel: viewModel)
         }
         .onAppear {
-            cameraService.checkPermission()
+            // Проверяем разрешение только один раз при первом появлении
+            if !cameraService.isAuthorized {
+                cameraService.checkPermission()
+            }
             // Запускаем звук для начального таба
             updateAudioForTab(selectedTab)
         }
         .onChange(of: selectedTab) { newTab in
+            // Моментально переключаем музыку при смене таба
             updateAudioForTab(newTab)
+        }
+        .onChange(of: viewModel.settings.soundEnabled) { enabled in
+            // Реагируем на изменение настройки звука
+            if enabled {
+                // Если звуки включили, запускаем музыку для текущего таба
+                // Используем небольшую задержку, чтобы не конфликтовать с переключением табов
+                DispatchQueue.main.async {
+                    self.updateAudioForTab(self.selectedTab)
+                }
+            } else {
+                // Если звуки выключили, останавливаем музыку моментально
+                audioManager.stop()
+            }
         }
     }
     
     private func updateAudioForTab(_ tab: Tab) {
+        // Моментально переключаем музыку для соответствующего таба
+        // playForMode сам остановит предыдущий звук перед запуском нового
+        
         switch tab {
         case .radar:
-            audioManager.playForMode(.radar)
+            if viewModel.settings.soundEnabled {
+                audioManager.playForMode(.radar)
+                viewModel.startRandomSounds() // Включаем случайные звуки для других экранов
+            } else {
+                audioManager.stop()
+                viewModel.stopRandomSounds()
+            }
         case .emf:
-            audioManager.playForMode(.emf)
+            if viewModel.settings.soundEnabled {
+                audioManager.playForMode(.emf)
+                viewModel.startRandomSounds()
+            } else {
+                audioManager.stop()
+                viewModel.stopRandomSounds()
+            }
         case .spiritBox:
-            audioManager.playForMode(.spirit)
+            if viewModel.settings.soundEnabled {
+                audioManager.playForMode(.spirit)
+                viewModel.startRandomSounds()
+            } else {
+                audioManager.stop()
+                viewModel.stopRandomSounds()
+            }
         case .settings:
-            audioManager.playForMode(.none)
+            // На экране настроек останавливаем ВСЕ звуки (и музыку, и случайные звуки)
+            audioManager.stop()
+            viewModel.stopRandomSounds()
         }
     }
 }

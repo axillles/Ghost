@@ -9,22 +9,14 @@ import SwiftUI
 import AVFoundation
 
 struct EMFScreen: View {
-    // Используем менеджер камеры из предыдущего задания
-    @StateObject private var cameraManager = CameraManager()
-    // Наш новый сервис логики EMF
-    @StateObject private var emfService = EMFService()
+    // Используем shared экземпляр EMFService
+    @ObservedObject private var emfService = EMFService.shared
     
     @State private var isFlashlightOn = false
     
     var body: some View {
         ZStack {
-            // 1. Фоновый слой - Камера
-            CameraPreviewView(session: cameraManager.session)
-                .edgesIgnoringSafeArea(.all)
-            
-            // Темная подложка для контраста
-            Color.black.opacity(0.4)
-                .edgesIgnoringSafeArea(.all)
+            // Камера уже отображается в MainView как фон, здесь только контент
             
             VStack {
                 Spacer()
@@ -45,7 +37,7 @@ struct EMFScreen: View {
                     // Кнопка фонарика (Справа внизу)
                     Button(action: {
                         isFlashlightOn.toggle()
-                        cameraManager.toggleFlashlight(on: isFlashlightOn)
+                        toggleFlashlight(on: isFlashlightOn)
                     }) {
                         Image(systemName: isFlashlightOn ? "flashlight.on.fill" : "flashlight.off.fill")
                             .font(.system(size: 24))
@@ -64,12 +56,26 @@ struct EMFScreen: View {
             }
         }
         .onAppear {
-            cameraManager.checkPermission()
-            emfService.startSensor()
+            // Запускаем асинхронно, чтобы не блокировать UI
+            DispatchQueue.main.async {
+                emfService.startSensor()
+            }
         }
         .onDisappear {
-            cameraManager.stopSession()
             emfService.stopSensor()
+        }
+    }
+    
+    private func toggleFlashlight(on: Bool) {
+        guard let device = AVCaptureDevice.default(.builtInWideAngleCamera, for: .video, position: .back),
+              device.hasTorch else { return }
+        
+        do {
+            try device.lockForConfiguration()
+            device.torchMode = on ? .on : .off
+            device.unlockForConfiguration()
+        } catch {
+            print("Flashlight error: \(error)")
         }
     }
 }
