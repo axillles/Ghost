@@ -23,7 +23,6 @@ struct SpiritBoxView: View {
     }
 }
 
-// Отдельная View для AVPlayer
 struct VideoPlayerView: UIViewControllerRepresentable {
     let player: AVPlayer
     
@@ -38,44 +37,35 @@ struct VideoPlayerView: UIViewControllerRepresentable {
     func updateUIViewController(_ uiViewController: AVPlayerViewController, context: Context) {}
 }
 
-// Manager для управления памятью и воспроизведением
 class VideoPlayerManager: ObservableObject {
     @Published var player: AVPlayer?
     private var playerLooper: AVPlayerLooper?
     private var playerItem: AVPlayerItem?
     
     func setupPlayer() {
-        // Проверяем есть ли уже плеер
         guard player == nil else {
             player?.play()
             return
         }
         
-        // Получаем путь к видео из Bundle
         guard let videoURL = Bundle.main.url(forResource: "candle", withExtension: "mp4") else {
             print("❌ Видео candle.mp4 не найдено в Bundle")
             return
         }
         
-        // Создаем AVPlayerItem с оптимизацией памяти
         let asset = AVAsset(url: videoURL)
         playerItem = AVPlayerItem(asset: asset)
         
-        // Создаем AVQueuePlayer для зацикливания
         let queuePlayer = AVQueuePlayer(playerItem: playerItem)
         
-        // Настройка оптимизации памяти
         queuePlayer.automaticallyWaitsToMinimizeStalling = false
         
-        // Зацикливание видео
         playerLooper = AVPlayerLooper(player: queuePlayer, templateItem: playerItem!)
-        
-        // Отключаем звук если нужно
+    
         queuePlayer.isMuted = true
         
         player = queuePlayer
         
-        // Устанавливаем рандомную начальную позицию (0-180 секунд для 3-минутного видео)
         let randomSeconds = Double.random(in: 0...180)
         let randomTime = CMTime(seconds: randomSeconds, preferredTimescale: 600)
         
@@ -88,10 +78,8 @@ class VideoPlayerManager: ObservableObject {
     }
     
     func cleanupPlayer() {
-        // Останавливаем воспроизведение
         player?.pause()
         
-        // Очищаем все ресурсы
         playerLooper = nil
         playerItem = nil
         player = nil

@@ -40,7 +40,6 @@ struct MainView: View {
     
     var body: some View {
         ZStack {
-            // Камера как фон
             if cameraService.isAuthorized {
                 CameraPreview(session: cameraService.session)
                     .ignoresSafeArea()
@@ -48,12 +47,10 @@ struct MainView: View {
                 Color.black.ignoresSafeArea()
             }
             
-            // Затемнение фона для лучшей видимости UI
             Color.black.opacity(0.3)
                 .ignoresSafeArea()
             
             VStack(spacing: 0) {
-                // Основной контент
                 Group {
                     switch selectedTab {
                     case .radar:
@@ -68,7 +65,6 @@ struct MainView: View {
                 }
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
                 
-                // Таббар
                 CustomTabBar(selectedTab: $selectedTab)
             }
         }
@@ -76,41 +72,31 @@ struct MainView: View {
             PaywallView(isPresented: $viewModel.showPaywall, mainViewModel: viewModel)
         }
         .onAppear {
-            // Проверяем разрешение только один раз при первом появлении
             if !cameraService.isAuthorized {
                 cameraService.checkPermission()
             }
-            // Запускаем звук для начального таба
             updateAudioForTab(selectedTab)
         }
         .onChange(of: selectedTab) { newTab in
-            // Моментально переключаем музыку при смене таба
             updateAudioForTab(newTab)
         }
         .onChange(of: viewModel.settings.soundEnabled) { enabled in
-            // Реагируем на изменение настройки звука
             if enabled {
-                // Если звуки включили, запускаем музыку для текущего таба
-                // Используем небольшую задержку, чтобы не конфликтовать с переключением табов
                 DispatchQueue.main.async {
                     self.updateAudioForTab(self.selectedTab)
                 }
             } else {
-                // Если звуки выключили, останавливаем музыку моментально
                 audioManager.stop()
             }
         }
     }
     
     private func updateAudioForTab(_ tab: Tab) {
-        // Моментально переключаем музыку для соответствующего таба
-        // playForMode сам остановит предыдущий звук перед запуском нового
-        
         switch tab {
         case .radar:
             if viewModel.settings.soundEnabled {
                 audioManager.playForMode(.radar)
-                viewModel.startRandomSounds() // Включаем случайные звуки для других экранов
+                viewModel.startRandomSounds()
             } else {
                 audioManager.stop()
                 viewModel.stopRandomSounds()
@@ -132,7 +118,6 @@ struct MainView: View {
                 viewModel.stopRandomSounds()
             }
         case .settings:
-            // На экране настроек останавливаем ВСЕ звуки (и музыку, и случайные звуки)
             audioManager.stop()
             viewModel.stopRandomSounds()
         }

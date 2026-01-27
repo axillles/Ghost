@@ -40,10 +40,8 @@ final class SubscriptionViewModel: ObservableObject {
             if let packages = offerings.current?.availablePackages {
                 for package in packages {
                     let product = package.storeProduct
-                    // Use localizedPriceString which is available in iOS
                     let formattedPrice = product.localizedPriceString
                     
-                    // Determine subscription type by identifier
                     if package.storeProduct.productIdentifier.contains("month") ||
                        package.storeProduct.productIdentifier.contains("monthly") {
                         monthlyPrice = formattedPrice
@@ -73,7 +71,6 @@ final class SubscriptionViewModel: ObservableObject {
                 return
             }
             
-            // Выбираем пакет в зависимости от выбранного плана
             let package: Package?
             switch selectedPlan {
             case .monthly:
@@ -91,26 +88,20 @@ final class SubscriptionViewModel: ObservableObject {
             let product = selectedPackage.storeProduct
             let (_, customerInfo, _) = try await Purchases.shared.purchase(package: selectedPackage)
             
-            // Проверяем, была ли это покупка или триал
             let hasActiveEntitlement = customerInfo.entitlements.active.count > 0
             
             if hasActiveEntitlement {
                 let productId = product.productIdentifier
-                
-                // Проверяем, это триал или покупка через период подписки
+            
                 if let activeEntitlement = customerInfo.entitlements.active.values.first {
                     let period = activeEntitlement.periodType
                     
                     if period == .trial {
-                        // Это триал
                         AnalyticsService.shared.logTrialStart(productId: productId)
                     } else {
-                        // Это покупка
-                        // Извлекаем валюту из localizedPriceString
                         let priceString = product.localizedPriceString
                         let currency = extractCurrency(from: priceString) ?? "USD"
                         
-                        // Конвертируем Decimal в Double через NSDecimalNumber
                         let price = NSDecimalNumber(decimal: product.price).doubleValue
                         
                         AnalyticsService.shared.logPurchase(
@@ -122,11 +113,9 @@ final class SubscriptionViewModel: ObservableObject {
                 }
             }
             
-            // Покупка успешна
             subscriptionService.updateSubscriptionStatus(customerInfo)
             hasActiveSubscription = subscriptionService.hasActiveSubscription()
         } catch {
-            // Проверяем, не была ли покупка отменена пользователем
             if let purchasesError = error as? Error {
                 let errorCode = (purchasesError as NSError).code
                 // ErrorCode.purchaseCancelledError has code 1
@@ -164,10 +153,7 @@ final class SubscriptionViewModel: ObservableObject {
         hasActiveSubscription = subscriptionService.hasActiveSubscription()
     }
     
-    // Вспомогательная функция для извлечения кода валюты из локализованной строки цены
     private func extractCurrency(from priceString: String) -> String? {
-        // Попытка извлечь код валюты из строки (например, "$9.99" -> "USD", "9,99 €" -> "EUR")
-        // Это упрощенный подход, можно использовать более сложную логику
         if priceString.contains("$") {
             return "USD"
         } else if priceString.contains("€") {

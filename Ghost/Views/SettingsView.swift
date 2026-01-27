@@ -12,13 +12,12 @@ import UIKit
 struct SettingsView: View {
     @ObservedObject var viewModel: MainViewModel
     @ObservedObject private var audioManager = AudioManager.shared
-    @State private var privacyPolicyURL = "https://project14105329.tilda.ws/"
+    @State private var privacyPolicyURL = "https://spectraghost.tilda.ws/page110547106.html"
     @State private var termsOfUseURL = "https://www.apple.com/legal/internet-services/itunes/dev/stdeula/"
     @State private var showShareSheet = false
     
     var body: some View {
         ZStack {
-            // Фоновое изображение с фиксированным размером экрана
             GeometryReader { geometry in
                 Image("settings_background")
                     .resizable()
@@ -28,20 +27,16 @@ struct SettingsView: View {
             }
             .ignoresSafeArea()
             
-            // Затемнение
             Color.black.opacity(0.4)
                 .ignoresSafeArea()
             
-            // Контент - полностью независим от фона
             ScrollView {
                 VStack(spacing: 30) {
-                    // Header
                     Text("SETTINGS")
                         .font(.system(size: 28, weight: .bold))
                         .foregroundColor(Color(hex: "7AFD91"))
                         .padding(.top, 20)
                     
-                    // App Settings Section
                     VStack(alignment: .leading, spacing: 15) {
                         Text("APP SETTINGS")
                             .font(.system(size: 16, weight: .semibold))
@@ -49,7 +44,6 @@ struct SettingsView: View {
                             .padding(.horizontal, 20)
                         
                         VStack(spacing: 15) {
-                            // Sound Effects Switch
                             HStack {
                                 Image(systemName: viewModel.settings.soundEnabled ? "speaker.wave.3.fill" : "speaker.slash.fill")
                                     .foregroundColor(Color(hex: "7AFD91"))
@@ -67,7 +61,6 @@ struct SettingsView: View {
                             .background(Color.white.opacity(0.1))
                             .cornerRadius(12)
                             
-                            // Volume Slider
                             VStack(alignment: .leading, spacing: 10) {
                                 HStack {
                                     Image(systemName: "speaker.wave.2.fill")
@@ -97,7 +90,6 @@ struct SettingsView: View {
                         .padding(.horizontal, 20)
                     }
                     
-                    // About Section
                     VStack(alignment: .leading, spacing: 15) {
                         Text("ABOUT")
                             .font(.system(size: 16, weight: .semibold))
@@ -105,7 +97,6 @@ struct SettingsView: View {
                             .padding(.horizontal, 20)
                         
                         VStack(spacing: 12) {
-                            // Rate Us
                             SettingsButton(
                                 icon: "star.fill",
                                 title: "Rate Us"
@@ -115,7 +106,6 @@ struct SettingsView: View {
                                 }
                             }
                             
-                            // Privacy Policy
                             SettingsButton(
                                 icon: "lock.shield.fill",
                                 title: "Privacy Policy"
@@ -125,7 +115,6 @@ struct SettingsView: View {
                                 }
                             }
                             
-                            // Terms of Use
                             SettingsButton(
                                 icon: "doc.text.fill",
                                 title: "Terms of Use"
@@ -135,7 +124,6 @@ struct SettingsView: View {
                                 }
                             }
                             
-                            // Share App
                             SettingsButton(
                                 icon: "square.and.arrow.up.fill",
                                 title: "Share App"

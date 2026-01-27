@@ -20,7 +20,6 @@ final class RadarService: ObservableObject {
     private var sensitivity: Double = 0.5
     
     private init() {
-        // Выбираем первый паттерн при старте
         currentPattern = Int.random(in: 1...5)
     }
     
@@ -46,15 +45,16 @@ final class RadarService: ObservableObject {
     
     private func updateRadar() {
         currentTime += 0.1
-        
-        // Переключение цикла
+        var newPattern: Int
         if currentTime >= cycleDuration {
             currentTime = 0
-            currentPattern = Int.random(in: 1...5)
-            // Можно добавить логику, чтобы паттерны не повторялись дважды подряд
+            newPattern = Int.random(in: 1...5)
+            if newPattern == currentPattern {
+                newPattern = Int.random(in: 1...5)
+            }
+            currentPattern = newPattern
         }
         
-        // Правило старта: первые 6 секунд пусто (среднее между 5 и 7)
         if currentTime < 6.0 {
             dots = []
             return
@@ -64,7 +64,7 @@ final class RadarService: ObservableObject {
     }
     
     // MARK: - Расчет координат
-    // Угол 0 = 12 часов. В математике 0 = 3 часа.
+    // Угол 0 = 12 часов
     // Корректируем: вычитаем 90 градусов.
     private func getPosition(angle: Double, radiusPercent: Double) -> CGPoint {
         let radius = (radiusPercent / 100.0) * 0.5 // 0.5 так как центр в 0.5
@@ -79,63 +79,51 @@ final class RadarService: ObservableObject {
         let t = currentTime
         
         switch currentPattern {
-        case 1: // «Преследование»
-            // Точка А: 190 градусов, ползет с 95% до 20%
+        case 1: // Преследование
             if t >= 6.0 && t <= 45.0 {
-                let progress = min((t - 6.0) / 30.0, 1.0) // ползет 30 сек
+                let progress = min((t - 6.0) / 30.0, 1.0)
                 var angle = 190.0
                 let radius = 95.0 - (progress * 75.0)
                 
-                // Резкий скачок на 36-й секунде
                 if t >= 36.0 { angle = 220.0 }
                 
-                // Растворение в конце
                 let alpha = t > 43.0 ? (45.0 - t) / 2.0 : 1.0
                 newDots.append(GhostDot(position: getPosition(angle: angle, radiusPercent: radius), intensity: alpha))
             }
-            // Точка Б: статика 15-20 сек
             if t >= 15.0 && t <= 20.0 {
                 newDots.append(GhostDot(position: getPosition(angle: 90, radiusPercent: 60), intensity: 1.0))
             }
             
-        case 2: // «Треугольник»
-            let rotation = t >= 15.0 ? (t - 15.0) * 2.0 : 0.0 // скорость вращения
+        case 2: // Треугольник
+            let rotation = t >= 15.0 ? (t - 15.0) * 2.0 : 0.0
             
-            // Точка А
             if t >= 5.0 && t <= 28.0 {
                 newDots.append(GhostDot(position: getPosition(angle: 0 + rotation, radiusPercent: 70), intensity: 1.0))
             }
-            // Точка Б
             if t >= 7.0 && t <= 30.0 {
                 newDots.append(GhostDot(position: getPosition(angle: 120 + rotation, radiusPercent: 70), intensity: 1.0))
             }
-            // Точка В
             if t >= 10.0 && t <= 35.0 {
                 var r = 70.0
-                if t > 32.0 { r += (t - 32.0) * 30.0 } // быстро удаляется
+                if t > 32.0 { r += (t - 32.0) * 30.0 }
                 newDots.append(GhostDot(position: getPosition(angle: 240 + rotation, radiusPercent: r), intensity: 1.0))
             }
             
-        case 3: // «Транзит»
-            // Точка А: слева направо (270 -> 90)
+        case 3: // Транзит
             if t >= 7.0 && t <= 30.0 {
                 let progress = (t - 7.0) / 23.0
-                // Имитация прямой линии через центр
-                // 270 градусов 90% -> 90 градусов 90%
-                let currentXPercent = -90.0 + (progress * 180.0) // от -90% до +90%
+                let currentXPercent = -90.0 + (progress * 180.0)
                 let angle = currentXPercent < 0 ? 270.0 : 90.0
                 let radius = abs(currentXPercent)
                 newDots.append(GhostDot(position: getPosition(angle: angle, radiusPercent: radius), intensity: 1.0))
             }
-            // Точка Б: мигание
             if t >= 18.0 && t <= 35.0 {
-                if Int(t * 10) % 40 < 20 { // Цикл 4 секунды (2 сек горит, 2 сек нет)
+                if Int(t * 10) % 40 < 20 {
                     newDots.append(GhostDot(position: getPosition(angle: 40, radiusPercent: 50), intensity: 1.0))
                 }
             }
             
-        case 4: // «Глючный сигнал»
-            // Точка А: телепортация
+        case 4: // Глючный сигнал
             if t >= 6.0 && t < 12.0 {
                 newDots.append(GhostDot(position: getPosition(angle: 330, radiusPercent: 60), intensity: 1.0))
             } else if t >= 14.0 && t < 20.0 {
@@ -144,15 +132,13 @@ final class RadarService: ObservableObject {
                 newDots.append(GhostDot(position: getPosition(angle: 10, radiusPercent: 30), intensity: 1.0))
             }
             
-            // Точка Б: хаос
             if t >= 25.0 && t <= 42.0 {
-                let jitter = sin(t * 10) * 10 // колебания +-10 градусов
+                let jitter = sin(t * 10) * 10
                 let alpha = t > 35.0 ? (42.0 - t) / 7.0 : 1.0
                 newDots.append(GhostDot(position: getPosition(angle: 180 + jitter, radiusPercent: 80), intensity: alpha))
             }
             
-        case 5: // «Близнецы»
-            // Точки А и Б
+        case 5: // Близнецы
             if t >= 5.0 && t <= 40.0 {
                 var r = 50.0
                 if t >= 15.0 && t <= 25.0 {
@@ -165,7 +151,6 @@ final class RadarService: ObservableObject {
                 newDots.append(GhostDot(position: getPosition(angle: 130, radiusPercent: r), intensity: alpha))
                 newDots.append(GhostDot(position: getPosition(angle: 140, radiusPercent: r), intensity: alpha))
             }
-            // Точка В
             if t >= 27.0 && t <= 35.0 {
                 newDots.append(GhostDot(position: getPosition(angle: 300, radiusPercent: 20), intensity: 1.0))
             }

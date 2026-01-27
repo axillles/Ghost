@@ -10,7 +10,6 @@ import SwiftUI
 struct Screen4: View {
     @State private var selectedOption: Int? = nil
     @Binding var currentPage: Int
-    @Binding var canSwipe: Bool
     var body: some View {
         ZStack {
             Color.black.edgesIgnoringSafeArea(.all)
@@ -18,7 +17,6 @@ struct Screen4: View {
             VStack(spacing: 40) {
                 Spacer()
                 
-                // Title
                 VStack(spacing: 8) {
                     HStack(spacing: 0) {
                         Text("What is your ")
@@ -53,7 +51,6 @@ struct Screen4: View {
                 
                 Spacer()
                 
-                // Options
                 VStack(spacing: 20) {
                     OptionButton(
                         emoji: "🤓",
@@ -66,7 +63,7 @@ struct Screen4: View {
                     OptionButton(
                         emoji: "🧐",
                         title: "BELIEVER",
-                        subtitle: "(I BELIEVE IN THE\nPARANORMAL)",
+                        subtitle: "(I BELIEVE IN THE PARANORMAL)",
                         isSelected: selectedOption == 1,
                         action: { selectedOption = 1 }
                     )
@@ -74,7 +71,7 @@ struct Screen4: View {
                     OptionButton(
                         emoji: "😎",
                         title: "EXPERT",
-                        subtitle: "(I'M HUNTING FOR\nEVIDENCE)",
+                        subtitle: "(I'M HUNTING FOR EVIDENCE)",
                         isSelected: selectedOption == 2,
                         action: { selectedOption = 2 }
                     )
@@ -83,10 +80,8 @@ struct Screen4: View {
                 
                 Spacer()
                 
-                // Continue Button
                 Button(action: {
                     currentPage += 1
-                    canSwipe = true
                 }) {
                     Text("Continue")
                         .font(.system(size: 28, weight: .bold))
@@ -100,6 +95,8 @@ struct Screen4: View {
                 .padding(.horizontal, 60)
                 .padding(.bottom, 40)
             }
+            .padding(.top, 60)
+            .padding(.bottom, 30)
         }
     }
 }
@@ -107,8 +104,8 @@ struct Screen4: View {
 
 
 
-//struct OnboardingView_Previews: PreviewProvider {
-//    static var previews: some View {
-//        Screen4(currentPage: .constant(0))
-//    }
-//}
+struct OnboardingView_Previews: PreviewProvider {
+    static var previews: some View {
+        Screen4(currentPage: .constant(0))
+    }
+}

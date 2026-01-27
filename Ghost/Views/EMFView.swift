@@ -9,23 +9,16 @@ import SwiftUI
 import AVFoundation
 
 struct EMFScreen: View {
-    // Используем shared экземпляр EMFService
-    @ObservedObject private var emfService = EMFService.shared
+    @ObservedObject private var emfService = EMFService.shared // для плавного перехода между экранами с камерой
     
     @State private var isFlashlightOn = false
     
     var body: some View {
         ZStack {
-            // Камера уже отображается в MainView как фон, здесь только контент
             
             VStack {
                 Spacer()
-                
-                // 2. Основной датчик
-                // Обрезаем нижнюю половину, чтобы получился полукруг как на макете
-
-                
-                // 3. Нижняя панель с кнопкой фонарика
+            
                 HStack(alignment: .bottom) {
                     Spacer()
                     EMFGaugeView(value: emfService.currentValue)
@@ -34,7 +27,6 @@ struct EMFScreen: View {
                         .padding(.bottom, 10)
                     Spacer()
                     
-                    // Кнопка фонарика (Справа внизу)
                     Button(action: {
                         isFlashlightOn.toggle()
                         toggleFlashlight(on: isFlashlightOn)
@@ -56,7 +48,6 @@ struct EMFScreen: View {
             }
         }
         .onAppear {
-            // Запускаем асинхронно, чтобы не блокировать UI
             DispatchQueue.main.async {
                 emfService.startSensor()
             }
@@ -80,7 +71,6 @@ struct EMFScreen: View {
     }
 }
 
-// Для предпросмотра в Xcode
 struct EMFScreen_Previews: PreviewProvider {
     static var previews: some View {
         EMFScreen()

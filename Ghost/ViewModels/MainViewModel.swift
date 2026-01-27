@@ -23,10 +23,8 @@ final class MainViewModel: ObservableObject {
     init() {
         settings = storage.loadSettings()
         radarService.setSensitivity(settings.radarSensitivity)
-        // Применяем настройки к обоим аудио сервисам
         audioService.volume = settings.volume
         audioManager.volume = settings.volume
-        // Если звуки выключены, останавливаем музыку
         if !settings.soundEnabled {
             audioManager.stop()
         }
@@ -53,7 +51,6 @@ final class MainViewModel: ObservableObject {
     func stopRandomSounds() {
         soundTimer?.invalidate()
         soundTimer = nil
-        // Полностью останавливаем все случайные звуки
         audioService.stopAllSounds()
     }
     
@@ -68,17 +65,14 @@ final class MainViewModel: ObservableObject {
         }
     }
     
-    // Новый метод для установки конкретного значения
     func setSoundEnabled(_ enabled: Bool) {
         settings.soundEnabled = enabled
         storage.saveSettings(settings)
         
         if enabled {
             startRandomSounds()
-            // Музыка будет включена автоматически через onChange в MainView
         } else {
             stopRandomSounds()
-            // Выключаем всю музыку в приложении
             audioManager.stop()
         }
     }
@@ -92,7 +86,6 @@ final class MainViewModel: ObservableObject {
     func updateVolume(_ value: Double) {
         settings.volume = value
         storage.saveSettings(settings)
-        // Обновляем громкость во всех аудио сервисах
         audioService.volume = value
         audioManager.volume = value
     }

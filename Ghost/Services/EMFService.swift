@@ -12,11 +12,10 @@ import Combine
 final class EMFService: ObservableObject {
     static let shared = EMFService()
     
-    // Текущее значение для стрелки (0-300)
     @Published var currentValue: Double = 0
     
     private var timer: Timer?
-    private var currentTime: Double = 0 // Время внутри 2-минутного цикла
+    private var currentTime: Double = 0
     private let cycleDuration: Double = 120.0
     
     // Переменные для отслеживания состояния в хаотичных фазах
@@ -129,12 +128,9 @@ final class EMFService: ObservableObject {
         let jitter = Double.random(in: -noiseLevel...noiseLevel)
         let noisyTarget = targetBase + jitter
         
-        // Ограничиваем значения физикой прибора (0-300)
         let clampedTarget = min(max(noisyTarget, 0), 300)
         
         // Плавное движение к цели (Lerp).
-        // Чем меньше коэффициент (0.1), тем плавнее и "тяжелее" стрелка.
-        // Чем больше (0.5), тем она более дерганная. 0.2 - хороший баланс.
         let smoothingFactor = 0.2
         currentValue = currentValue + (clampedTarget - currentValue) * smoothingFactor
     }

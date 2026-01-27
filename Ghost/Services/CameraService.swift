@@ -25,7 +25,6 @@ final class CameraService: NSObject, ObservableObject {
     }
     
     func checkPermission() {
-        // Не проверяем повторно, если уже авторизованы
         guard !isAuthorized else { return }
         
         switch AVCaptureDevice.authorizationStatus(for: .video) {
@@ -51,13 +50,11 @@ final class CameraService: NSObject, ObservableObject {
     }
     
     func setup() {
-        // Не настраиваем повторно, если уже настроено
         guard !isSetup else { return }
         
         sessionQueue.async { [weak self] in
             guard let self = self else { return }
             
-            // Проверяем, не запущена ли уже сессия
             if self.session.isRunning {
                 self.isSetup = true
                 return

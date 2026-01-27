@@ -1,4 +1,6 @@
 import SwiftUI
+import StoreKit
+import UIKit
 
 struct Screen6: View {
     @Binding var currentPage: Int
@@ -11,6 +13,7 @@ struct Screen6: View {
     @State private var text4 = ""
     @State private var text4Green = ""
     @State private var progress: Double = 0
+    @State private var hasRequestedReview = false
     
     let fullText1 = "Analyzing geolocation data..."
     let fullText2 = "Scanning local area for paranormal\nactivity..."
@@ -26,9 +29,7 @@ struct Screen6: View {
             VStack(spacing: 40) {
                 Spacer()
                 
-                // Loading Circle Animation
                 ZStack {
-                    // Outer rotating arcs (thicker)
                     ForEach(0..<4) { index in
                         Circle()
                             .trim(from: 0, to: 0.2)
@@ -37,7 +38,6 @@ struct Screen6: View {
                             .rotationEffect(Angle(degrees: rotation + Double(index * 90)))
                     }
                     
-                    // Inner rotating arcs (original thickness)
                     ForEach(0..<4) { index in
                         Circle()
                             .trim(from: 0, to: 0.2)
@@ -46,7 +46,6 @@ struct Screen6: View {
                             .rotationEffect(Angle(degrees: -rotation + Double(index * 90)))
                     }
                     
-                    // Outer progress circle (green, unfilled part darker)
                     ZStack {
                         Circle()
                             .stroke(Color(hex: "7AFD91").opacity(0.2), lineWidth: 6)
@@ -59,7 +58,6 @@ struct Screen6: View {
                             .rotationEffect(Angle(degrees: -90))
                     }
                     
-                    // Inner progress circle (white dashes)
                     ZStack {
                         ForEach(0..<60, id: \.self) { index in
                             Rectangle()
@@ -71,14 +69,12 @@ struct Screen6: View {
                     }
                     .frame(width: 180, height: 180)
                     
-                    // Percentage text
                     Text("\(Int(progress * 100))%")
                         .font(.system(size: 48, weight: .bold))
                         .foregroundColor(Color(hex: "7AFD91"))
                 }
                 .frame(height: 300)
                 
-                // Animated text messages
                 VStack(spacing: 30) {
                     if !text1.isEmpty {
                         Text(text1)
@@ -119,7 +115,6 @@ struct Screen6: View {
                 
                 Spacer()
                 
-                // Continue Button
                 Button(action: {
                     OnboardingService.shared.completeOnboarding()
                     onComplete()
@@ -134,7 +129,7 @@ struct Screen6: View {
                 }
                 .padding(.horizontal, 60)
                 .padding(.bottom, 40)
-                .opacity(!text4Green.isEmpty && text4Green == fullText4Green ? 1 : 0)
+                .opacity(progress >= 1.0 && !text4Green.isEmpty && text4Green == fullText4Green ? 1 : 0)
             }
         }
         .onAppear {
@@ -143,25 +138,17 @@ struct Screen6: View {
     }
     
     func startAnimation() {
-        // Rotating circle animation (infinite)
         withAnimation(.linear(duration: 8).repeatForever(autoreverses: false)) {
             rotation = 360
         }
         
-        // Progress bar animation from 0 to 100 smoothly
         animateProgress()
         
-        // Typewriter effect for text 1
         typeWriter(text: fullText1, into: $text1, delay: 0.5) {
-            // After text1 finishes, start text2
             typeWriter(text: fullText2, into: $text2, delay: 0.3) {
-                // After text2 finishes, start text3
                 typeWriter(text: fullText3, into: $text3, delay: 0.3) {
-                    // Then type the red part
                     typeWriter(text: fullText3Red, into: $text3Red, delay: 0.3) {
-                        // After text3 finishes, start text4
                         typeWriter(text: fullText4, into: $text4, delay: 0.3) {
-                            // Then type the green part
                             typeWriter(text: fullText4Green, into: $text4Green, delay: 0.3)
                         }
                     }
@@ -177,6 +164,19 @@ struct Screen6: View {
             } else {
                 progress = 1.0
                 timer.invalidate()
+                requestReviewIfNeeded()
+            }
+        }
+    }
+    
+    func requestReviewIfNeeded() {
+        guard !hasRequestedReview else { return }
+        hasRequestedReview = true
+        
+        // Небольшая задержка перед показом запроса отзыва
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
+            if let windowScene = UIApplication.shared.connectedScenes.first as? UIWindowScene {
+                SKStoreReviewController.requestReview(in: windowScene)
             }
         }
     }

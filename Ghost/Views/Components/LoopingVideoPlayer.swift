@@ -17,17 +17,13 @@ struct LoopingVideoPlayer: UIViewRepresentable {
         let player = AVPlayer()
         let playerLayer = AVPlayerLayer(player: player)
         
-        // Настройка слоя
         playerLayer.videoGravity = .resizeAspectFill
         view.layer.addSublayer(playerLayer)
         
-        // Загрузка видео - пробуем разные пути
         var url: URL?
         
-        // Сначала пробуем в корне Resources
         url = Bundle.main.url(forResource: videoName, withExtension: videoExtension)
         
-        // Если не найдено, пробуем в подпапке Resources
         if url == nil {
             url = Bundle.main.url(forResource: videoName, withExtension: videoExtension, subdirectory: "Resources")
         }
@@ -40,7 +36,6 @@ struct LoopingVideoPlayer: UIViewRepresentable {
         let playerItem = AVPlayerItem(url: videoURL)
         player.replaceCurrentItem(with: playerItem)
         
-        // Настройка зацикливания
         let observer = NotificationCenter.default.addObserver(
             forName: .AVPlayerItemDidPlayToEndTime,
             object: playerItem,
@@ -50,13 +45,11 @@ struct LoopingVideoPlayer: UIViewRepresentable {
             player?.play()
         }
         
-        // Сохранение ссылок в контексте
         context.coordinator.player = player
         context.coordinator.playerLayer = playerLayer
         context.coordinator.observer = observer
         context.coordinator.playerItem = playerItem
         
-        // Автоматическое воспроизведение
         player.play()
         
         return view

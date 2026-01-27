@@ -18,17 +18,28 @@ final class SubscriptionService {
     }
     
     private func configureRevenueCat() {
-        // Revenue Cat API key (тестовый или продакшн)
-        // Get it from Revenue Cat Dashboard: https://app.revenuecat.com
+        #if DEBUG
+        // Тестовый ключ только для Debug сборок
         let apiKey = "test_aRwiKWuLDbfaYDatarwVPIEpRgM"
-        
         Purchases.logLevel = .debug
+        #else
+        // Production ключ для Release сборок (TestFlight, App Store)
+        // ⚠️ ВАЖНО: Замените на ваш реальный Production API Key из Revenue Cat Dashboard
+        // Production ключ начинается с "appl_" или "rcapi_"
+        let apiKey = "YOUR_PRODUCTION_API_KEY_HERE" // TODO: Замените на реальный production ключ
+        Purchases.logLevel = .error // В production используем только ошибки
+        #endif
+        
+        // Проверка, что в Release не используется тестовый ключ
+        #if !DEBUG
+        if apiKey.hasPrefix("test_") {
+            fatalError("❌ КРИТИЧЕСКАЯ ОШИБКА: В Release сборке нельзя использовать тестовый API ключ RevenueCat! Используйте Production API Key.")
+        }
+        #endif
+        
         Purchases.configure(withAPIKey: apiKey)
         
         print("✅ Revenue Cat configured with API key: \(apiKey.prefix(10))...")
-        
-        // Set user identifier (optional)
-        // Purchases.shared.logIn("user_id") { customerInfo, created, error in }
     }
     
     func hasActiveSubscription() -> Bool {

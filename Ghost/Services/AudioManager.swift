@@ -51,7 +51,6 @@ final class AudioManager: NSObject, ObservableObject {
     }
     
     private func loadSoundFiles() {
-        // Загружаем файлы Radar
         radarFiles = ["RADAR_1", "RADAR_2", "RADAR_3", "RADAR_4", "RADAR_5"]
         var loadedRadarCount = 0
         for fileName in radarFiles {
@@ -64,7 +63,6 @@ final class AudioManager: NSObject, ObservableObject {
         }
         print("📦 Loaded \(loadedRadarCount)/\(radarFiles.count) Radar sound files")
         
-        // Загружаем файлы Spirit
         spiritFiles = ["Spirit_1", "Spirit_2", "Spirit_3", "Spirit_4", "Spirit_5", "Spirit_6", "Spirit_8", "Spirit_9"]
         var loadedSpiritCount = 0
         for fileName in spiritFiles {
@@ -77,7 +75,6 @@ final class AudioManager: NSObject, ObservableObject {
         }
         print("📦 Loaded \(loadedSpiritCount)/\(spiritFiles.count) Spirit sound files")
         
-        // Загружаем EMF файл
         emfURL = findSoundFile(fileName: emfFile, subdirectory: "Sounds/EMF")
         if emfURL != nil {
             print("📦 Loaded EMF sound file")
@@ -87,23 +84,19 @@ final class AudioManager: NSObject, ObservableObject {
     }
     
     private func findSoundFile(fileName: String, subdirectory: String) -> URL? {
-        // Способ 1: С subdirectory (стандартный способ)
         if let url = Bundle.main.url(forResource: fileName, withExtension: "mp3", subdirectory: subdirectory) {
             return url
         }
         
-        // Способ 2: С "Resources/" префиксом
         if let url = Bundle.main.url(forResource: fileName, withExtension: "mp3", subdirectory: "Resources/\(subdirectory)") {
             return url
         }
         
-        // Способ 3: Без "Sounds/" префикса
         let dirName = subdirectory.replacingOccurrences(of: "Sounds/", with: "")
         if let url = Bundle.main.url(forResource: fileName, withExtension: "mp3", subdirectory: dirName) {
             return url
         }
         
-        // Способ 4: Прямой путь через resourcePath
         if let resourcePath = Bundle.main.resourcePath {
             let possiblePaths = [
                 "\(resourcePath)/\(subdirectory)/\(fileName).mp3",
@@ -118,7 +111,6 @@ final class AudioManager: NSObject, ObservableObject {
             }
         }
         
-        // Способ 5: Без subdirectory
         if let url = Bundle.main.url(forResource: fileName, withExtension: "mp3") {
             return url
         }
@@ -126,13 +118,9 @@ final class AudioManager: NSObject, ObservableObject {
         return nil
     }
     
-    /// Главный метод переключения режима звука
     func playForMode(_ mode: AudioMode) {
-        // ВСЕГДА останавливаем текущий звук перед переключением (даже если режим тот же)
-        // Это гарантирует моментальную остановку и предотвращает наслоение
         stopImmediately()
         
-        // Если режим тот же, просто останавливаем и выходим
         guard currentMode != mode else {
             print("ℹ️ Mode already set to \(mode), stopped current playback")
             currentMode = mode
@@ -141,10 +129,8 @@ final class AudioManager: NSObject, ObservableObject {
         
         print("🔄 Switching from \(currentMode) to \(mode)")
         
-        // Устанавливаем новый режим
         currentMode = mode
         
-        // Запускаем звук для нового режима
         switch mode {
         case .radar:
             playRandomRadarSound()
@@ -223,18 +209,15 @@ final class AudioManager: NSObject, ObservableObject {
         }
     }
     
-    /// Основной метод воспроизведения звука
     private func playSound(url: URL, shouldLoop: Bool) {
         do {
             let newPlayer = try AVAudioPlayer(contentsOf: url)
             
-            // Финальная проверка: режим не изменился
             guard currentMode != .none else {
                 print("⚠️ Mode is none, not playing sound")
                 return
             }
             
-            // Устанавливаем плеер
             audioPlayer = newPlayer
             audioPlayer?.delegate = self
             audioPlayer?.volume = Float(volume)
@@ -254,7 +237,6 @@ final class AudioManager: NSObject, ObservableObject {
         }
     }
     
-    /// Полная остановка (публичный метод)
     func stop() {
         print("🛑 Stop called")
         stopImmediately()
@@ -303,7 +285,6 @@ final class AudioManager: NSObject, ObservableObject {
     func preloadAllSounds() {
         print("🔄 Preloading all sounds...")
         
-        // Предзагрузка по одному файлу каждого типа
         if let radarURL = radarURLs.values.first {
             _ = try? AVAudioPlayer(contentsOf: radarURL)
         }
@@ -324,7 +305,6 @@ final class AudioManager: NSObject, ObservableObject {
 
 extension AudioManager: AVAudioPlayerDelegate {
     func audioPlayerDidFinishPlaying(_ player: AVAudioPlayer, successfully flag: Bool) {
-        // Проверяем, что это текущий плеер
         guard player === audioPlayer else {
             print("⚠️ Finished player is not current player")
             return
@@ -336,7 +316,6 @@ extension AudioManager: AVAudioPlayerDelegate {
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) { [weak self] in
             guard let self = self else { return }
             
-            // Проверяем, что режим всё ещё активен
             switch self.currentMode {
             case .radar:
                 print("🔄 Playing next random radar sound")
@@ -345,7 +324,6 @@ extension AudioManager: AVAudioPlayerDelegate {
                 print("🔄 Playing next random spirit sound")
                 self.playRandomSpiritSound()
             case .emf:
-                // EMF зациклен, не нужно запускать следующий
                 break
             case .none:
                 print("ℹ️ Mode is none, not playing next sound")
@@ -358,7 +336,6 @@ extension AudioManager: AVAudioPlayerDelegate {
         
         guard player === audioPlayer else { return }
         
-        // При ошибке пробуем запустить другой звук
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) { [weak self] in
             guard let self = self else { return }
             

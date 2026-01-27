@@ -72,7 +72,6 @@ final class PaywallViewModel: ObservableObject {
                 return
             }
             
-            // Выбираем пакет в зависимости от выбранного плана
             let package: Package?
             switch selectedPlan {
             case .monthly:

@@ -8,28 +8,23 @@ struct RadarScreen: View {
     
     var body: some View {
         ZStack {
-            // Камера уже отображается в MainView как фон, здесь только контент
             
             VStack {
                 Spacer()
                 
-                // Radar with overlay gradient
                 ZStack {
-                    // Radar component
                     RadarView(radarService: radarService)
                         .frame(width: 200, height: 200)
                         .onTapGesture {
                             toggleRadar()
                         }
                     
-                    // Sweep gradient animation
                     if isRadarActive {
                         RadarSweepView()
                             .frame(width: 200, height: 200)
                     }
                 }
                 
-                // START/STOP text
                 Button(action: {
                     toggleRadar()
                 }) {
@@ -41,7 +36,6 @@ struct RadarScreen: View {
                 
             }
             
-            // Flashlight button (bottom right)
             VStack {
                 Spacer()
                 HStack {
@@ -62,7 +56,6 @@ struct RadarScreen: View {
             }
         }
         .onAppear {
-            // Запускаем асинхронно, чтобы не блокировать UI
             DispatchQueue.main.async {
                 radarService.startRadar()
             }
@@ -95,7 +88,6 @@ struct RadarScreen: View {
     }
 }
 
-// Radar Sweep Animation
 struct RadarSweepView: View {
     @State private var rotation: Double = 0
     
@@ -124,7 +116,6 @@ struct RadarSweepView: View {
     }
 }
 
-// Radar View
 struct RadarView: View {
     @ObservedObject var radarService: RadarService
     
@@ -177,13 +168,11 @@ struct RadarGrid: View {
             let radius = min(geometry.size.width, geometry.size.height) / 2
             
             ZStack {
-                // Outer circle
                 Circle()
                     .stroke(Color(hex: "7AFD91"), lineWidth: 3)
                     .frame(width: radius * 2, height: radius * 2)
                     .position(center)
                 
-                // Inner circles
                 ForEach(1..<4, id: \.self) { index in
                     Circle()
                         .stroke(Color(hex: "7AFD91").opacity(0.3), lineWidth: 1.5)
@@ -194,7 +183,6 @@ struct RadarGrid: View {
                         .position(center)
                 }
                 
-                // Cross lines
                 Path { path in
                     path.move(to: CGPoint(x: center.x, y: center.y - radius))
                     path.addLine(to: CGPoint(x: center.x, y: center.y + radius))
@@ -207,7 +195,6 @@ struct RadarGrid: View {
                 }
                 .stroke(Color(hex: "7AFD91").opacity(0.3), lineWidth: 1.5)
                 
-                // Degree marks
                 ForEach(0..<36, id: \.self) { index in
                     let angle = Double(index) * 10 * .pi / 180
                     let isMainMark = index % 3 == 0
@@ -228,7 +215,6 @@ struct RadarGrid: View {
                     .stroke(Color(hex: "7AFD91"), lineWidth: isMainMark ? 2 : 1)
                 }
                 
-                // Degree numbers
                 ForEach([0, 30, 60, 90, 120, 150, 180, 210, 240, 270, 300, 330], id: \.self) { degree in
                     let angle = Double(degree) * .pi / 180
                     Text("\(degree)")
@@ -244,7 +230,6 @@ struct RadarGrid: View {
     }
 }
 
-// Helper extension for hex colors
 
 
 struct RadarScreen_Previews: PreviewProvider {

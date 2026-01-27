@@ -17,7 +17,6 @@ struct SubscriptionView: View {
             Color.black.ignoresSafeArea()
             
             VStack(spacing: 0) {
-                // Header
                 VStack(spacing: 20) {
                     Image(systemName: "crown.fill")
                         .font(.system(size: 60))
@@ -37,7 +36,6 @@ struct SubscriptionView: View {
                 
                 Spacer()
                 
-                // Features
                 VStack(alignment: .leading, spacing: 20) {
                     FeatureRow(icon: "sparkles", text: "All features unlocked")
                     FeatureRow(icon: "waveform", text: "Advanced radar")
@@ -49,7 +47,6 @@ struct SubscriptionView: View {
                 
                 Spacer()
                 
-                // Subscription Options
                 VStack(spacing: 16) {
                     if viewModel.isLoading {
                         ProgressView()
@@ -57,7 +54,6 @@ struct SubscriptionView: View {
                             .scaleEffect(1.5)
                             .padding(.vertical, 40)
                     } else {
-                        // Yearly Subscription
                         SubscriptionButton(
                             title: "Year",
                             price: viewModel.yearlyPrice,
@@ -70,7 +66,6 @@ struct SubscriptionView: View {
                             viewModel.selectedPlan = .yearly
                         }
                         
-                        // Monthly Subscription
                         SubscriptionButton(
                             title: "Month",
                             price: viewModel.monthlyPrice,
@@ -84,7 +79,6 @@ struct SubscriptionView: View {
                         }
                     }
                     
-                    // Purchase Button
                     Button(action: {
                         Task {
                             await viewModel.purchaseSubscription()
@@ -105,7 +99,6 @@ struct SubscriptionView: View {
                     .disabled(viewModel.isPurchasing || viewModel.isLoading)
                     .padding(.top, 8)
                     
-                    // Restore Purchases
                     Button(action: {
                         Task {
                             await viewModel.restorePurchases()
@@ -121,7 +114,6 @@ struct SubscriptionView: View {
                     }
                     .padding(.top, 12)
                     
-                    // Terms and Privacy
                     HStack(spacing: 20) {
                         Link("Terms of Service", destination: URL(string: "https://example.com/terms")!)
                             .font(.system(size: 12))

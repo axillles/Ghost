@@ -26,9 +26,7 @@ struct GhostApp: App {
             if showOnboarding {
                 OnboardingFlow(onComplete: {
                     showOnboarding = false
-                    // Показываем экран подписок через 5 секунд после завершения онбординга
                     DispatchQueue.main.asyncAfter(deadline: .now() + 5.0) {
-                        // Показываем только если нет активной подписки
                         if !SubscriptionService.shared.hasActiveSubscription() {
                             showSubscription = true
                         }

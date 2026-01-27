@@ -9,31 +9,22 @@ import SwiftUI
 
 struct OnboardingFlow: View {
     @State private var currentPage = 0
-    @State private var canSwipeFromPage0 = false // Можно ли свайпать с 1-го экрана
-    @State private var canSwipeFromPage1 = false // Можно ли свайпать со 2-го экрана
     @StateObject private var audioManager = AudioManager.shared
     var onComplete: () -> Void
     
     var body: some View {
         TabView(selection: $currentPage) {
-            Screen1(currentPage: $currentPage)
+            Screen1(currentPage: createBinding(for: 0))
                 .tag(0)
-            Screen2(currentPage: $currentPage)
+            Screen2(currentPage: createBinding(for: 1))
                 .tag(1)
-            Screen3(currentPage: $currentPage)
+            Screen3(currentPage: createBinding(for: 2))
                 .tag(2)
-            Screen4(currentPage: $currentPage, canSwipe: $canSwipeFromPage1)
+            Screen4(currentPage: createBinding(for: 3))
                 .tag(3)
-                .simultaneousGesture(
-                    canSwipeFromPage1 ? nil : DragGesture()
-                )
-            Screen5(currentPage: $currentPage, canSwipe: $canSwipeFromPage0)
+            Screen5(currentPage: createBinding(for: 4))
                 .tag(4)
-                .simultaneousGesture(
-                    canSwipeFromPage0 ? nil : DragGesture()
-                )
-            Screen6(currentPage: $currentPage, onComplete: {
-                // Останавливаем музыку перед завершением onboarding
+            Screen6(currentPage: createBinding(for: 5), onComplete: {
                 audioManager.stopOnboardingMusic()
                 onComplete()
             })
@@ -41,17 +32,23 @@ struct OnboardingFlow: View {
         }
         .tabViewStyle(.page(indexDisplayMode: .never))
         .ignoresSafeArea()
-        .onAppear {
-            // Запускаем зацикленную музыку при появлении onboarding
-            audioManager.playOnboardingMusic()
-        }
-        .onDisappear {
-            // Останавливаем музыку при закрытии onboarding
-            audioManager.stopOnboardingMusic()
-        }
+        .simultaneousGesture(
+            DragGesture(minimumDistance: 20)
+                .onChanged { _ in }
+        )
+    }
+    
+    private func createBinding(for page: Int) -> Binding<Int> {
+        Binding(
+            get: { currentPage },
+            set: { newValue in
+                withAnimation(.easeInOut(duration: 0.3)) {
+                    currentPage = newValue
+                }
+            }
+        )
     }
 }
-
 #Preview {
     OnboardingFlow(onComplete: {})
 }

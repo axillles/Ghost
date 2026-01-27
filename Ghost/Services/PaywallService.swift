@@ -24,9 +24,4 @@ final class PaywallService {
         settings.hasUnlockedPremium = true
         storage.saveSettings(settings)
     }
-    
-    // Устаревший метод, используйте SubscriptionService для работы с подписками
-    func purchasePremium() {
-        unlockPremium()
-    }
 }

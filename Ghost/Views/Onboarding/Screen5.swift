@@ -10,15 +10,14 @@ import SwiftUI
 struct Screen5: View {
     @State private var selectedOption: Int? = nil
     @Binding var currentPage: Int
-    @Binding var canSwipe: Bool
     var body: some View {
         ZStack {
             Color.black.edgesIgnoringSafeArea(.all)
             
             VStack(spacing: 40) {
                 Spacer()
+                    
                 
-                // Title
                 VStack(spacing: 8) {
                     HStack(spacing: 0) {
                         Text("Select ")
@@ -47,7 +46,6 @@ struct Screen5: View {
                 
                 Spacer()
                 
-                // Options
                 VStack(spacing: 20) {
                     OptionButton(
                         emoji: "🛏️",
@@ -77,10 +75,8 @@ struct Screen5: View {
                 
                 Spacer()
                 
-                // Continue Button
                 Button(action: {
                     currentPage += 1
-                    canSwipe = true
                 }) {
                     Text("Continue")
                         .font(.system(size: 28, weight: .bold))
@@ -94,13 +90,14 @@ struct Screen5: View {
                 .padding(.horizontal, 60)
                 .padding(.bottom, 40)
             }
+            .padding(.top, 60)
         }
     }
 }
 
 
-//struct ScanAreaView_Previews: PreviewProvider {
-//    static var previews: some View {
-//        Screen5(currentPage: .constant(0))
-//    }
-//}
+struct ScanAreaView_Previews: PreviewProvider {
+    static var previews: some View {
+        Screen5(currentPage: .constant(0))
+    }
+}

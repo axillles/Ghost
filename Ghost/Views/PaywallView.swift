@@ -56,7 +56,6 @@ struct PaywallView: View {
             loadPaywall()
         }
         .onDisappear {
-            // Обновляем статус подписки после закрытия paywall
             Task {
                 do {
                     let customerInfo = try await Purchases.shared.customerInfo()
@@ -66,22 +65,15 @@ struct PaywallView: View {
                     
                     let currentStatus = SubscriptionService.shared.hasActiveSubscription()
                     
-                    // Если статус изменился с неактивного на активный, значит была покупка
                     if !previousStatus && currentStatus {
-                        // Проверяем активные entitlements для получения информации о продукте
                         if let activeEntitlement = customerInfo.entitlements.active.values.first {
                             let productIdentifier = activeEntitlement.productIdentifier
                             
-                            // Проверяем, это триал или покупка через период подписки
                             let period = activeEntitlement.periodType
                             
                             if period == .trial {
-                                // Это триал
                                 AnalyticsService.shared.logTrialStart(productId: productIdentifier)
                             } else {
-                                // Это покупка
-                                // Получаем информацию о продукте для цены
-                                
                                 let offerings = try await Purchases.shared.offerings()
                                 if let package = offerings.current?.availablePackages.first(where: { $0.storeProduct.productIdentifier == productIdentifier }) {
                                     let product = package.storeProduct
@@ -94,7 +86,6 @@ struct PaywallView: View {
                                         currency: currency
                                     )
                                 } else {
-                                    // Если не можем получить продукт, логируем без цены
                                     AnalyticsService.shared.logPurchase(productId: productIdentifier)
                                 }
                             }
@@ -112,7 +103,6 @@ struct PaywallView: View {
     }
     
     private func loadPaywall() {
-        // Проверяем доступность offerings
         Task {
             do {
                 let offerings = try await Purchases.shared.offerings()
@@ -131,7 +121,6 @@ struct PaywallView: View {
         }
     }
     
-    // Вспомогательная функция для извлечения кода валюты из локализованной строки цены
     private func extractCurrency(from priceString: String) -> String? {
         if priceString.contains("$") {
             return "USD"

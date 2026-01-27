@@ -97,25 +97,19 @@ struct NeedleView: View {
     private let needleWidth: CGFloat = 4    // Толщина стрелки
 
     var body: some View {
-        // Угол: 0 mG = -90°, 300 mG = +90°
+        // Угол: 0 mG = -90, 300 mG = +90
         let angle = (value / 300.0) * 180.0 - 90.0
 
         return ZStack {
-            // Сама игла
             Capsule()
                 .fill(Color.white)
                 .frame(width: needleWidth, height: needleLength)
-                // Сдвигаем иглу вверх на половину её длины.
-                // Теперь её НИЖНИЙ край находится ровно в центре ZStack.
                 .offset(y: -needleLength / 2)
 
-            // Основание стрелки (кружок)
-            // Он уже в центре ZStack по умолчанию
             Circle()
                 .fill(Color.white)
                 .frame(width: 16, height: 16)
         }
-        // Теперь anchor: .center — это ровно центр кружка и нижний край иглы
         .rotationEffect(.degrees(angle), anchor: .center)
     }
 }

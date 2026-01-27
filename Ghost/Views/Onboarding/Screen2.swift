@@ -43,7 +43,7 @@ struct Screen2: View {
                         }
                     }
                     .padding(.horizontal, 25)
-                    .padding(.bottom, max(geometry.safeAreaInsets.bottom + 45, 40))
+                    .padding(.bottom, geometry.safeAreaInsets.bottom + 40) // 40pt от safe area
                 }
             }
         }
