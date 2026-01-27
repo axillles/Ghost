@@ -12,6 +12,7 @@ final class RadarService: ObservableObject {
     static let shared = RadarService()
     
     @Published var dots: [GhostDot] = []
+    @Published var isActive: Bool = false
     
     private var timer: Timer?
     private var currentTime: Double = 0
@@ -31,6 +32,7 @@ final class RadarService: ObservableObject {
         stopRadar()
         currentTime = 0
         currentPattern = Int.random(in: 1...5)
+        isActive = true
         
         timer = Timer.scheduledTimer(withTimeInterval: 0.1, repeats: true) { [weak self] _ in
             self?.updateRadar()
@@ -41,6 +43,7 @@ final class RadarService: ObservableObject {
         timer?.invalidate()
         timer = nil
         dots = []
+        isActive = false
     }
     
     private func updateRadar() {

@@ -15,18 +15,20 @@ struct EMFScreen: View {
     
     var body: some View {
         ZStack {
-            
             VStack {
                 Spacer()
+                
+                // EMFGaugeView по центру
+                EMFGaugeView(value: emfService.currentValue)
+                    .frame(width: 300, height: 150, alignment: .top)
+                    .padding(.bottom, 20)
+            }
             
-                HStack(alignment: .bottom) {
+            // Фонарик справа
+            VStack {
+                Spacer()
+                HStack {
                     Spacer()
-                    EMFGaugeView(value: emfService.currentValue)
-                        .frame(width: 300, height: 150, alignment: .top)
-                         // Обрезаем все что ниже центра
-                        .padding(.bottom, 10)
-                    Spacer()
-                    
                     Button(action: {
                         isFlashlightOn.toggle()
                         toggleFlashlight(on: isFlashlightOn)
@@ -42,7 +44,7 @@ struct EMFScreen: View {
                                     .stroke(Color.white.opacity(isFlashlightOn ? 0 : 0.5), lineWidth: 1)
                             )
                     }
-                    .padding(.trailing, 30)
+                    .padding(.trailing, 8)
                     .padding(.bottom, 50)
                 }
             }

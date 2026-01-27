@@ -28,7 +28,21 @@ final class EMFService: ObservableObject {
     
     func startSensor() {
         stopSensor()
-        currentTime = 0
+        // Начинаем с случайной секунды от 0 до 120 (2 минуты)
+        currentTime = Double.random(in: 0..<cycleDuration)
+        
+        // Инициализируем состояние для хаотичной фазы, если мы в ней
+        if currentTime >= 45.0 && currentTime < 90.0 {
+            chaosTarget = Double.random(in: 50...180)
+            lastChaosUpdateTime = currentTime - Double.random(in: 0...3.0) // Случайное время последнего обновления
+        } else {
+            lastChaosUpdateTime = 0
+            chaosTarget = 0
+        }
+        
+        // Сразу обновляем значение для текущего времени
+        updateReading()
+        
         // Обновляем 20 раз в секунду для плавности и постоянного дрожания
         timer = Timer.scheduledTimer(withTimeInterval: 0.05, repeats: true) { [weak self] _ in
             self?.updateReading()

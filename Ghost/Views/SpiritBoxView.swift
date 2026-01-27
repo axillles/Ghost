@@ -7,6 +7,7 @@ struct SpiritBoxView: View {
     
     var body: some View {
         ZStack {
+            Color.black.edgesIgnoringSafeArea(.all)
             if let player = videoPlayerManager.player {
                 VideoPlayerView(player: player)
                     .edgesIgnoringSafeArea(.all)
@@ -31,6 +32,8 @@ struct VideoPlayerView: UIViewControllerRepresentable {
         controller.player = player
         controller.showsPlaybackControls = false
         controller.videoGravity = .resizeAspectFill
+        controller.view.backgroundColor = .black
+        controller.view.contentMode = .scaleAspectFill
         return controller
     }
     
@@ -56,9 +59,14 @@ class VideoPlayerManager: ObservableObject {
         let asset = AVAsset(url: videoURL)
         playerItem = AVPlayerItem(asset: asset)
         
+        playerItem?.preferredForwardBufferDuration = 5
+        playerItem?.canUseNetworkResourcesForLiveStreamingWhilePaused = false
+        
         let queuePlayer = AVQueuePlayer(playerItem: playerItem)
         
         queuePlayer.automaticallyWaitsToMinimizeStalling = false
+        
+        queuePlayer.appliesMediaSelectionCriteriaAutomatically = true
         
         playerLooper = AVPlayerLooper(player: queuePlayer, templateItem: playerItem!)
     

@@ -31,7 +31,10 @@ final class AudioManager: NSObject, ObservableObject {
     
     var volume: Double = 0.5 {
         didSet {
-            audioPlayer?.volume = Float(volume)
+            // Обновляем громкость только если не в режиме EMF (для EMF используется минимальная громкость)
+            if currentMode != .emf {
+                audioPlayer?.volume = Float(volume)
+            }
         }
     }
     
@@ -51,7 +54,7 @@ final class AudioManager: NSObject, ObservableObject {
     }
     
     private func loadSoundFiles() {
-        radarFiles = ["RADAR_1", "RADAR_2", "RADAR_3", "RADAR_4", "RADAR_5"]
+        radarFiles = ["RADAR_1"]
         var loadedRadarCount = 0
         for fileName in radarFiles {
             if let url = findSoundFile(fileName: fileName, subdirectory: "Sounds/Radar") {
@@ -153,24 +156,26 @@ final class AudioManager: NSObject, ObservableObject {
         audioPlayer = nil
     }
     
-    /// Воспроизведение случайного звука Radar
+    /// Воспроизведение звука Radar (только Radar_1.mp3 в зацикленном режиме)
     private func playRandomRadarSound() {
-        guard !radarFiles.isEmpty else {
-            print("❌ No radar files available")
-            return
-        }
-        
         guard currentMode == .radar else {
             print("⚠️ Mode changed, cancelling radar playback")
             return
         }
         
-        let randomFile = radarFiles.randomElement()!
+        // Всегда используем только Radar_1.mp3
+        let radarFile = "RADAR_1"
         
-        if let url = radarURLs[randomFile] {
-            playSound(url: url, shouldLoop: false)
+        if let url = radarURLs[radarFile] {
+            playSound(url: url, shouldLoop: true)
         } else {
-            print("❌ Radar sound file \(randomFile).mp3 not found")
+            // Попробуем найти файл напрямую
+            if let url = findSoundFile(fileName: radarFile, subdirectory: "Sounds/Radar") {
+                radarURLs[radarFile] = url
+                playSound(url: url, shouldLoop: true)
+            } else {
+                print("❌ Radar sound file \(radarFile).mp3 not found")
+            }
         }
     }
     
@@ -220,14 +225,16 @@ final class AudioManager: NSObject, ObservableObject {
             
             audioPlayer = newPlayer
             audioPlayer?.delegate = self
-            audioPlayer?.volume = Float(volume)
+            // Для EMF режима используем минимальную громкость
+            let soundVolume: Float = currentMode == .emf ? Float(0.1) : Float(volume)
+            audioPlayer?.volume = soundVolume
             audioPlayer?.numberOfLoops = shouldLoop ? -1 : 0
             audioPlayer?.prepareToPlay()
             
             let didStart = audioPlayer?.play() ?? false
             
             if didStart {
-                print("▶️ Playing: \(url.lastPathComponent) | Loop: \(shouldLoop) | Mode: \(currentMode)")
+                print("▶️ Playing: \(url.lastPathComponent) | Loop: \(shouldLoop) | Mode: \(currentMode) | Volume: \(soundVolume)")
             } else {
                 print("❌ Failed to start playback")
             }
@@ -318,8 +325,8 @@ extension AudioManager: AVAudioPlayerDelegate {
             
             switch self.currentMode {
             case .radar:
-                print("🔄 Playing next random radar sound")
-                self.playRandomRadarSound()
+                // Radar_1.mp3 зациклен, не нужно перезапускать
+                break
             case .spirit:
                 print("🔄 Playing next random spirit sound")
                 self.playRandomSpiritSound()

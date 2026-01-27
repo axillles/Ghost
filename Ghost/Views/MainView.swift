@@ -94,13 +94,9 @@ struct MainView: View {
     private func updateAudioForTab(_ tab: Tab) {
         switch tab {
         case .radar:
-            if viewModel.settings.soundEnabled {
-                audioManager.playForMode(.radar)
-                viewModel.startRandomSounds()
-            } else {
-                audioManager.stop()
-                viewModel.stopRandomSounds()
-            }
+            // Звук радара управляется из RadarView через кнопку START/STOP
+            // Не включаем звук автоматически при переходе на экран радара
+            break
         case .emf:
             if viewModel.settings.soundEnabled {
                 audioManager.playForMode(.emf)

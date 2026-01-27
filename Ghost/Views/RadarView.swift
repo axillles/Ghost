@@ -3,8 +3,9 @@ import AVFoundation
 
 struct RadarScreen: View {
     @ObservedObject var radarService = RadarService.shared
+    @ObservedObject private var audioManager = AudioManager.shared
+    private let storage = StorageService.shared
     @State private var isFlashlightOn = false
-    @State private var isRadarActive = true
     
     var body: some View {
         ZStack {
@@ -14,12 +15,12 @@ struct RadarScreen: View {
                 
                 ZStack {
                     RadarView(radarService: radarService)
-                        .frame(width: 200, height: 200)
+                        .frame(width: 190, height: 190)
                         .onTapGesture {
                             toggleRadar()
                         }
                     
-                    if isRadarActive {
+                    if radarService.isActive {
                         RadarSweepView()
                             .frame(width: 200, height: 200)
                     }
@@ -28,10 +29,10 @@ struct RadarScreen: View {
                 Button(action: {
                     toggleRadar()
                 }) {
-                    Text(isRadarActive ? "STOP" : "START")
-                        .font(.system(size: 28, weight: .bold))
+                    Text(radarService.isActive ? "STOP" : "START")
+                        .font(.system(size: 26, weight: .medium))
                         .foregroundColor(Color(hex: "7AFD91"))
-                        .padding(.top, 20)
+                        .padding(.top, 40)
                 }
                 
             }
@@ -55,22 +56,29 @@ struct RadarScreen: View {
                 }
             }
         }
-        .onAppear {
-            DispatchQueue.main.async {
-                radarService.startRadar()
-            }
-        }
+        .padding(.bottom, 20)
         .onDisappear {
             radarService.stopRadar()
+            let settings = storage.loadSettings()
+            if settings.soundEnabled {
+                audioManager.stop()
+            }
         }
     }
     
     private func toggleRadar() {
-        isRadarActive.toggle()
-        if isRadarActive {
-            radarService.startRadar()
-        } else {
+        let settings = storage.loadSettings()
+        
+        if radarService.isActive {
             radarService.stopRadar()
+            if settings.soundEnabled {
+                audioManager.stop()
+            }
+        } else {
+            radarService.startRadar()
+            if settings.soundEnabled {
+                audioManager.playForMode(.radar)
+            }
         }
     }
     
@@ -92,21 +100,39 @@ struct RadarSweepView: View {
     @State private var rotation: Double = 0
     
     var body: some View {
-        ZStack {
-            Circle()
+        GeometryReader { geometry in
+            let center = CGPoint(x: geometry.size.width / 2, y: geometry.size.height / 2)
+            let radius = min(geometry.size.width, geometry.size.height) / 2
+            let sweepAngle: Double = 90 // Ширина луча в градусах
+            
+            ZStack {
+                Path { path in
+                    path.move(to: center)
+                    path.addLine(to: CGPoint(x: center.x, y: 0))
+                    path.addArc(
+                        center: center,
+                        radius: radius,
+                        startAngle: .degrees(-90),
+                        endAngle: .degrees(-90 + sweepAngle),
+                        clockwise: false
+                    )
+                    path.addLine(to: center)
+                }
                 .fill(
-                    AngularGradient(
+                    RadialGradient(
                         gradient: Gradient(colors: [
-                            Color(hex: "7AFD91").opacity(0.8),
+                            Color(hex: "7AFD91").opacity(0.1),
                             Color(hex: "7AFD91").opacity(0.4),
-                            Color.clear
+                            Color(hex: "7AFD91").opacity(0.7),
+                            Color(hex: "7AFD91").opacity(0.9)
                         ]),
                         center: .center,
-                        startAngle: .degrees(0),
-                        endAngle: .degrees(90)
+                        startRadius: 0,
+                        endRadius: radius
                     )
                 )
                 .rotationEffect(.degrees(rotation))
+            }
         }
         .onAppear {
             withAnimation(.linear(duration: 2).repeatForever(autoreverses: false)) {
@@ -115,7 +141,6 @@ struct RadarSweepView: View {
         }
     }
 }
-
 struct RadarView: View {
     @ObservedObject var radarService: RadarService
     
@@ -235,5 +260,6 @@ struct RadarGrid: View {
 struct RadarScreen_Previews: PreviewProvider {
     static var previews: some View {
         RadarScreen()
+            .preferredColorScheme(.dark)
     }
 }
