@@ -21,7 +21,7 @@ struct EMFScreen: View {
                 // EMFGaugeView по центру
                 EMFGaugeView(value: emfService.currentValue)
                     .frame(width: 300, height: 150, alignment: .top)
-                    .padding(.bottom, 20)
+                    .padding(.bottom, 35)
             }
             
             // Фонарик справа
@@ -34,21 +34,17 @@ struct EMFScreen: View {
                         toggleFlashlight(on: isFlashlightOn)
                     }) {
                         Image(systemName: isFlashlightOn ? "flashlight.on.fill" : "flashlight.off.fill")
-                            .font(.system(size: 24))
-                            .foregroundColor(isFlashlightOn ? .black : .white)
-                            .padding(16)
-                            .background(isFlashlightOn ? Color.white : Color.black.opacity(0.6))
+                            .font(.system(size: 32))
+                            .foregroundColor(isFlashlightOn ? Color(hex: "7AFD91") : .white)
+                            .padding(20)
+                            .background(Color.black.opacity(0.5))
                             .clipShape(Circle())
-                            .overlay(
-                                Circle()
-                                    .stroke(Color.white.opacity(isFlashlightOn ? 0 : 0.5), lineWidth: 1)
-                            )
                     }
-                    .padding(.trailing, 8)
-                    .padding(.bottom, 50)
+                    .padding(.trailing, 30)
                 }
             }
         }
+        .padding(.bottom, 20)
         .onAppear {
             DispatchQueue.main.async {
                 emfService.startSensor()

@@ -99,23 +99,22 @@ struct MainView: View {
             break
         case .emf:
             if viewModel.settings.soundEnabled {
+                // EMF звук - один зацикленный, без случайных звуков
                 audioManager.playForMode(.emf)
-                viewModel.startRandomSounds()
             } else {
                 audioManager.stop()
-                viewModel.stopRandomSounds()
             }
         case .spiritBox:
             if viewModel.settings.soundEnabled {
+                // Spirit звуки - последовательное воспроизведение через AudioManager delegate
+                // Не используем startRandomSounds, чтобы избежать наслоения
                 audioManager.playForMode(.spirit)
-                viewModel.startRandomSounds()
             } else {
                 audioManager.stop()
-                viewModel.stopRandomSounds()
             }
         case .settings:
+            // На экране настроек звуков нет
             audioManager.stop()
-            viewModel.stopRandomSounds()
         }
     }
 }
@@ -132,7 +131,7 @@ struct CustomTabBar: View {
                     VStack(spacing: 6) {
                         Image(tab.imageName)
                             .resizable()
-                            .frame(width: 28, height: 28)
+                            .frame(width: 32, height: 32)
                             .opacity(selectedTab == tab ? 1.0 : 0.5)
                         
                         Text(tab.title)

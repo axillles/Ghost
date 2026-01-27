@@ -9,41 +9,49 @@ import SwiftUI
 
 struct Screen1: View {
     @Binding var currentPage: Int
-
+    
     var body: some View {
-        GeometryReader {geometry in
+        GeometryReader { geometry in
             ZStack {
-                Color.black.ignoresSafeArea()
-                
                 Image("onboarding1")
                     .resizable()
-                    .scaledToFit()
-                    .frame(maxWidth: .infinity, maxHeight: .infinity)
-                
+                    .ignoresSafeArea()
+                    .frame(width: geometry.size.width, height: geometry.size.height)
+                    .clipped()
+                    .edgesIgnoringSafeArea(.all)
                 
                 VStack {
                     Spacer()
-                    
-                    Button(action: {
-                        currentPage += 1
-                    }) {
-                        Text("Continue")
+                    ZStack{
+                        Rectangle()
                             .font(.system(size: 28, weight: .bold))
                             .foregroundColor(.black)
                             .frame(maxWidth: .infinity)
                             .frame(height: 70)
                             .background(Color(hex: "7AFD91"))
                             .cornerRadius(35)
+                        Button(action: {
+                            currentPage += 1
+                        }) {
+                            Text("Continue")
+                                .font(.system(size: 28, weight: .bold))
+                                .foregroundColor(.black)
+                                .frame(maxWidth: .infinity)
+                                .frame(height: 70)
+                                .background(Color(hex: "7AFD91"))
+                                .cornerRadius(35)
+                        }
                     }
                     .padding(.horizontal, 25)
                     .padding(.bottom, geometry.safeAreaInsets.bottom + 40) // 40pt от safe area
                 }
             }
         }
+        .edgesIgnoringSafeArea(.all)
     }
 }
 
-struct SpirtBoxViw_Previews: PreviewProvider {
+struct Spir1itBoxViw_Previews: PreviewProvider {
     static var previews: some View {
         Screen1(currentPage: .constant(0))
     }

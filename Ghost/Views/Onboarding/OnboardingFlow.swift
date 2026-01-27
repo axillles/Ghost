@@ -6,10 +6,10 @@
 //
 
 import SwiftUI
+import UIKit
 
 struct OnboardingFlow: View {
     @State private var currentPage = 0
-    @StateObject private var audioManager = AudioManager.shared
     var onComplete: () -> Void
     
     var body: some View {
@@ -25,17 +25,37 @@ struct OnboardingFlow: View {
             Screen5(currentPage: createBinding(for: 4))
                 .tag(4)
             Screen6(currentPage: createBinding(for: 5), onComplete: {
-                audioManager.stopOnboardingMusic()
                 onComplete()
             })
                 .tag(5)
         }
         .tabViewStyle(.page(indexDisplayMode: .never))
         .ignoresSafeArea()
-        .simultaneousGesture(
-            DragGesture(minimumDistance: 20)
-                .onChanged { _ in }
-        )
+        .onAppear {
+            disableSwipeInTabView()
+        }
+        .onChange(of: currentPage) { _ in
+            disableSwipeInTabView()
+        }
+    }
+    
+    private func disableSwipeInTabView() {
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
+            if let windowScene = UIApplication.shared.connectedScenes.first as? UIWindowScene,
+               let window = windowScene.windows.first,
+               let rootViewController = window.rootViewController {
+                disableSwipeInView(rootViewController.view)
+            }
+        }
+    }
+    
+    private func disableSwipeInView(_ view: UIView) {
+        if let scrollView = view as? UIScrollView {
+            scrollView.isScrollEnabled = false
+        }
+        for subview in view.subviews {
+            disableSwipeInView(subview)
+        }
     }
     
     private func createBinding(for page: Int) -> Binding<Int> {
@@ -49,6 +69,7 @@ struct OnboardingFlow: View {
         )
     }
 }
+
 #Preview {
     OnboardingFlow(onComplete: {})
 }

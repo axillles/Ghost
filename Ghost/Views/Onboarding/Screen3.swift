@@ -15,7 +15,7 @@ struct Screen3: View {
             ZStack {
                 Image("onboarding3")
                     .resizable()
-                    .scaledToFill()
+                    .ignoresSafeArea()
                     .frame(width: geometry.size.width, height: geometry.size.height)
                     .clipped()
                     .edgesIgnoringSafeArea(.all)
@@ -43,7 +43,7 @@ struct Screen3: View {
                         }
                     }
                     .padding(.horizontal, 25)
-                    .padding(.bottom, max(geometry.safeAreaInsets.bottom + 45, 40))
+                    .padding(.bottom, geometry.safeAreaInsets.bottom + 40) // 40pt от safe area
                 }
             }
         }
@@ -51,8 +51,8 @@ struct Screen3: View {
     }
 }
 
-struct SpiritBoxView_Previews: PreviewProvider {
+struct Spir1itBoxVi21w_Previews: PreviewProvider {
     static var previews: some View {
-        Screen3(currentPage: .constant(0))
+        Screen1(currentPage: .constant(0))
     }
 }

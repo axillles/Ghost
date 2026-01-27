@@ -28,7 +28,8 @@ final class MainViewModel: ObservableObject {
         if !settings.soundEnabled {
             audioManager.stop()
         }
-        startRandomSounds()
+        // Не запускаем случайные звуки автоматически
+        // Звуки управляются через AudioManager для каждого экрана отдельно
     }
     
     func startRandomSounds() {
@@ -58,10 +59,11 @@ final class MainViewModel: ObservableObject {
         settings.soundEnabled.toggle()
         storage.saveSettings(settings)
         
-        if settings.soundEnabled {
-            startRandomSounds()
-        } else {
+        // Звуки управляются через AudioManager для каждого экрана отдельно
+        // Не запускаем случайные звуки здесь, чтобы избежать наслоения
+        if !settings.soundEnabled {
             stopRandomSounds()
+            audioManager.stop()
         }
     }
     
@@ -69,9 +71,9 @@ final class MainViewModel: ObservableObject {
         settings.soundEnabled = enabled
         storage.saveSettings(settings)
         
-        if enabled {
-            startRandomSounds()
-        } else {
+        // Звуки управляются через AudioManager для каждого экрана отдельно
+        // Не запускаем случайные звуки здесь, чтобы избежать наслоения
+        if !enabled {
             stopRandomSounds()
             audioManager.stop()
         }
