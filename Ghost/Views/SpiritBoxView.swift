@@ -24,20 +24,54 @@ struct SpiritBoxView: View {
     }
 }
 
-struct VideoPlayerView: UIViewControllerRepresentable {
+struct VideoPlayerView: UIViewRepresentable {
     let player: AVPlayer
     
-    func makeUIViewController(context: Context) -> AVPlayerViewController {
-        let controller = AVPlayerViewController()
-        controller.player = player
-        controller.showsPlaybackControls = false
-        controller.videoGravity = .resizeAspectFill
-        controller.view.backgroundColor = .black
-        controller.view.contentMode = .scaleAspectFill
-        return controller
+    func makeCoordinator() -> Coordinator {
+        Coordinator()
     }
     
-    func updateUIViewController(_ uiViewController: AVPlayerViewController, context: Context) {}
+    func makeUIView(context: Context) -> PlayerView {
+        let view = PlayerView()
+        view.backgroundColor = .black
+        
+        // Создаем AVPlayerLayer для лучшего контроля качества
+        let playerLayer = AVPlayerLayer(player: player)
+        playerLayer.videoGravity = .resizeAspectFill
+        
+        // Критически важные настройки для четкости
+        playerLayer.magnificationFilter = .nearest // Убирает размытие при увеличении
+        playerLayer.minificationFilter = .nearest // Убирает размытие при уменьшении
+        playerLayer.shouldRasterize = false // Отключаем растеризацию
+        playerLayer.isOpaque = true // Улучшает производительность
+        
+        view.layer.addSublayer(playerLayer)
+        context.coordinator.playerLayer = playerLayer
+        
+        return view
+    }
+    
+    func updateUIView(_ uiView: PlayerView, context: Context) {
+        // Обновляем frame при изменении размера
+        DispatchQueue.main.async {
+            context.coordinator.playerLayer?.frame = uiView.bounds
+        }
+    }
+    
+    class Coordinator {
+        var playerLayer: AVPlayerLayer?
+    }
+}
+
+// Кастомный UIView для правильной работы с AVPlayerLayer
+class PlayerView: UIView {
+    override func layoutSubviews() {
+        super.layoutSubviews()
+        // Обновляем frame слоя при изменении размера view
+        if let playerLayer = layer.sublayers?.first as? AVPlayerLayer {
+            playerLayer.frame = bounds
+        }
+    }
 }
 
 class VideoPlayerManager: ObservableObject {
@@ -59,14 +93,31 @@ class VideoPlayerManager: ObservableObject {
         let asset = AVAsset(url: videoURL)
         playerItem = AVPlayerItem(asset: asset)
         
+        // Настройки для лучшего качества воспроизведения
         playerItem?.preferredForwardBufferDuration = 5
         playerItem?.canUseNetworkResourcesForLiveStreamingWhilePaused = false
+        
+        // Включаем автоматическую обработку качества
+        if #available(iOS 13.0, *) {
+            playerItem?.automaticallyHandlesInterstitialEvents = true
+        }
+        
+        // Настройки для лучшего качества видео
+        playerItem?.videoComposition = nil // Используем оригинальное качество
         
         let queuePlayer = AVQueuePlayer(playerItem: playerItem)
         
         queuePlayer.automaticallyWaitsToMinimizeStalling = false
         
         queuePlayer.appliesMediaSelectionCriteriaAutomatically = true
+        
+        // Настройки для лучшего качества
+        if #available(iOS 16.0, *) {
+            queuePlayer.preventsDisplaySleepDuringVideoPlayback = true
+        }
+        
+        // Используем высокое качество рендеринга
+        queuePlayer.allowsExternalPlayback = false // Отключаем внешнее воспроизведение для лучшего контроля качества
         
         playerLooper = AVPlayerLooper(player: queuePlayer, templateItem: playerItem!)
     

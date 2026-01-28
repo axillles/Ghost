@@ -1,11 +1,11 @@
 {
   "images" : [
     {
-      "filename" : "RADAR_Logo.png",
       "idiom" : "universal",
       "scale" : "1x"
     },
     {
+      "filename" : "RADAR_Logo.png",
       "idiom" : "universal",
       "scale" : "2x"
     },

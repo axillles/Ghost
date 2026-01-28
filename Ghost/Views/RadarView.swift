@@ -22,7 +22,7 @@ struct RadarScreen: View {
                     
                     if radarService.isActive {
                         RadarSweepView()
-                            .frame(width: 200, height: 200)
+                            .frame(width: 190, height: 190)
                     }
                 }
                 

@@ -130,6 +130,13 @@ struct SettingsView: View {
                             ) {
                                 showShareSheet = true
                             }
+                            
+                            SettingsButton(
+                                icon: "crown.fill",
+                                title: "Premium"
+                            ) {
+                                viewModel.showPaywall = true
+                            }
                         }
                         .padding(.horizontal, 20)
                     }

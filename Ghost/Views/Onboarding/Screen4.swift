@@ -14,7 +14,7 @@ struct Screen4: View {
         ZStack {
             Color.black.edgesIgnoringSafeArea(.all)
             
-            VStack(spacing: 40) {
+            VStack(spacing: 30) {
                 Spacer()
                     .frame(height: 80)
                 
@@ -36,6 +36,7 @@ struct Screen4: View {
                             .font(.system(size: 34, weight: .bold))
                             .foregroundColor(.white)
                     }
+                    
                     
                     Rectangle()
                         .fill(Color.gray.opacity(0.3))
@@ -108,7 +109,7 @@ struct Screen4: View {
                 }
             }
             .padding(.top, 60)
-            .padding(.bottom, 130)
+            .padding(.bottom, 80)
         }
     }
 }

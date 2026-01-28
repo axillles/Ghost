@@ -17,6 +17,9 @@ struct GhostApp: App {
         // Инициализация Firebase
         FirebaseApp.configure()
         
+        // Инициализация RevenueCat (чтобы он был готов до использования PaywallView)
+        _ = SubscriptionService.shared
+        
         // Отслеживаем первый запуск приложения
         checkAndLogFirstOpen()
     }
@@ -34,8 +37,9 @@ struct GhostApp: App {
                 })
             } else {
                 MainView()
-                    .sheet(isPresented: $showSubscription) {
-                        SubscriptionView(isPresented: $showSubscription, mainViewModel: MainViewModel())
+                    .fullScreenCover(isPresented: $showSubscription) {
+                        SubscriptionView(isPresented: $showSubscription, mainViewModel: MainViewModel(), isRequired: true)
+                            .interactiveDismissDisabled(true) // Запрещаем закрытие свайпом вниз
                     }
             }
         }

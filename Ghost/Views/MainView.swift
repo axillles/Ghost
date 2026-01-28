@@ -131,7 +131,7 @@ struct CustomTabBar: View {
                     VStack(spacing: 6) {
                         Image(tab.imageName)
                             .resizable()
-                            .frame(width: 32, height: 32)
+                            .frame(width: 70, height: 70)
                             .opacity(selectedTab == tab ? 1.0 : 0.5)
                         
                         Text(tab.title)

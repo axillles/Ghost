@@ -11,6 +11,7 @@ struct SubscriptionView: View {
     @StateObject private var viewModel = SubscriptionViewModel()
     @Binding var isPresented: Bool
     @ObservedObject var mainViewModel: MainViewModel
+    var isRequired: Bool = false // Если true, paywall нельзя закрыть
     
     var body: some View {
         ZStack {
@@ -84,6 +85,7 @@ struct SubscriptionView: View {
                             await viewModel.purchaseSubscription()
                             if viewModel.hasActiveSubscription {
                                 mainViewModel.settings = StorageService.shared.loadSettings()
+                                // Закрываем только если есть активная подписка
                                 isPresented = false
                             }
                         }
@@ -134,6 +136,7 @@ struct SubscriptionView: View {
         } message: {
             Text(viewModel.errorMessage)
         }
+        .interactiveDismissDisabled(isRequired) // Запрещаем закрытие свайпом вниз, если обязательный
         .onAppear {
             Task {
                 await viewModel.loadOfferings()

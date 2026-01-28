@@ -23,4 +23,10 @@ final class OnboardingService {
         settings.hasCompletedOnboarding = true
         storage.saveSettings(settings)
     }
+    
+    func resetOnboarding() {
+        var settings = storage.loadSettings()
+        settings.hasCompletedOnboarding = false
+        storage.saveSettings(settings)
+    }
 }

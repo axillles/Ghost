@@ -15,10 +15,10 @@ struct Screen1: View {
             ZStack {
                 Image("onboarding1")
                     .resizable()
-                    .ignoresSafeArea()
+                    .scaledToFill()
                     .frame(width: geometry.size.width, height: geometry.size.height)
                     .clipped()
-                    .edgesIgnoringSafeArea(.all)
+                    .ignoresSafeArea()
                 
                 VStack {
                     Spacer()

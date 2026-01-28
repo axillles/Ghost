@@ -26,7 +26,7 @@ final class SubscriptionService {
         // Production ключ для Release сборок (TestFlight, App Store)
         // ⚠️ ВАЖНО: Замените на ваш реальный Production API Key из Revenue Cat Dashboard
         // Production ключ начинается с "appl_" или "rcapi_"
-        let apiKey = "YOUR_PRODUCTION_API_KEY_HERE" // TODO: Замените на реальный production ключ
+        let apiKey = "appl_nnIMawgYMERcywYpCVgAgOYJJrt" // TODO: Замените на реальный production ключ
         Purchases.logLevel = .error // В production используем только ошибки
         #endif
         

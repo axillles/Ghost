@@ -14,6 +14,7 @@ struct PaywallView: View {
     @ObservedObject var mainViewModel: MainViewModel
     @State private var isLoading = true
     @State private var errorMessage: String?
+    var isRequired: Bool = false // Если true, paywall нельзя закрыть
     
     var body: some View {
         ZStack {
@@ -33,25 +34,30 @@ struct PaywallView: View {
                         .foregroundColor(.gray)
                         .multilineTextAlignment(.center)
                         .padding()
-                    Button("Закрыть") {
-                        isPresented = false
+                    if !isRequired {
+                        Button("Закрыть") {
+                            isPresented = false
+                        }
+                        .buttonStyle(.borderedProminent)
                     }
-                    .buttonStyle(.borderedProminent)
                 }
                 .padding()
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
                 .background(Color.black)
             } else {
-                RevenueCatUI.PaywallView()
+                PaywallContentView()
             }
         }
         .toolbar {
-            ToolbarItem(placement: .navigationBarTrailing) {
-                Button("Закрыть") {
-                    isPresented = false
+            if !isRequired {
+                ToolbarItem(placement: .navigationBarTrailing) {
+                    Button("Закрыть") {
+                        isPresented = false
+                    }
                 }
             }
         }
+        .interactiveDismissDisabled(isRequired) // Запрещаем закрытие свайпом вниз, если обязательный
         .onAppear {
             loadPaywall()
         }
@@ -104,6 +110,12 @@ struct PaywallView: View {
     
     private func loadPaywall() {
         Task {
+            // Убеждаемся, что RevenueCat инициализирован
+            _ = SubscriptionService.shared
+            
+            // Небольшая задержка для гарантии инициализации
+            try? await Task.sleep(nanoseconds: 500_000_000) // 0.5 секунды
+            
             do {
                 let offerings = try await Purchases.shared.offerings()
                 await MainActor.run {
@@ -132,6 +144,33 @@ struct PaywallView: View {
             return "RUB"
         }
         return nil
+    }
+}
+
+// Обертка для безопасного использования RevenueCatUI.PaywallView
+private struct PaywallContentView: View {
+    var body: some View {
+        Group {
+            // Проверяем, что Purchases.shared доступен
+            if Purchases.isConfigured {
+                RevenueCatUI.PaywallView()
+            } else {
+                VStack(spacing: 20) {
+                    Image(systemName: "exclamationmark.triangle")
+                        .font(.system(size: 50))
+                        .foregroundColor(.yellow)
+                    Text("RevenueCat не инициализирован")
+                        .font(.headline)
+                        .foregroundColor(.white)
+                    Text("Пожалуйста, перезапустите приложение")
+                        .font(.subheadline)
+                        .foregroundColor(.gray)
+                }
+                .padding()
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
+                .background(Color.black)
+            }
+        }
     }
 }
 
